@@ -264,7 +264,6 @@ Observamos que el filtrado recibe 0 filas que cumplan que un parcial posterior t
 rm(inconsistentes_parciales)
 ```
 
-
 ### Valores Nulos y Faltantes {#sec-valores-nulos}
 En esta subsección se realizará un análisis de los valores nulos y faltantes que existen en el conjunto de datos con el objetivo de identificar posibles patrones y establecer una estrategia para tratarlos. 
 
@@ -319,7 +318,6 @@ filas_con_na$n_na <- rowSums(is.na(filas_con_na[, cols_tiempo]))
 
 unique(filas_con_na$n_na)
 ```
-
 
 Por lo que se puede observar, el número de parciales faltantes puede ser 1, 2, 3, 5, 8 ó 9. Para finalizar el estudio de la forma de los valores nulos y faltantes de nuestro conjunto de datos, vamos a visualizar de todas estas filas, el número de parciales faltantes **consecutivos**, ya que será de vital importancia posterior. 
 
@@ -471,7 +469,6 @@ primera_imputacion[cols_tiempo] <- lapply(
 )
 ```
 
-
 Por último, añadimos las imputaciones correspondientes al conjunto de datos inicial: 
 
 ```{r}
@@ -490,7 +487,6 @@ print("Datos faltantes imputados")
 # Elimino todos los valores, datos y funciones creadas:
 rm(df_trabajo, filas_para_imputar, primera_imputacion, d_5, d_10, d_35, d_40, dist, factor_salida, filas_na_5, filas_na_40, idx_5, idx_10, idx_35, idx_40, imputar_parciales, redondear_hms)
 ```
-
 
 Por último, observo el análisis de completitud para ver cómo se ha quedado el conjunto de datos: 
 
@@ -514,7 +510,6 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 
 resultadosTokyo2025$Genero <- as.factor(resultadosTokyo2025$Genero)
 ```
-
 
 ### Nombre de los participantes {#sec-estandarizar-nombre}
 
@@ -620,7 +615,6 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 
 ```
 
-
 ```{r}
 rm(conteo_paises, conteo_paises_limpios, df, paises_problematicos, paises_validos)
 ```
@@ -637,8 +631,11 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 ```
 
 ## Creación de Variables Derivadas {#sec-variables-derivadas}
+
 Con el objetivo de lograr una mayor comprensión del conjunto de datos inicial a través de los posteriores estudios, se ha tomado la decisión de crear algunas nuevas variables. 
+
 ### Ritmos Parciales {#sec-ritmos-parciales}
+
 Se van a crear nuevas variables para determinar el ritmo (min/km) de los corredores al paso de cada uno de los parciales de la prueba. Además se creará una variable con el ritmo promedio basado en el *tiempo_final*.
 
 Para ello: 
@@ -660,29 +657,60 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 ```
 
 ### Categorización por Nivel de Rendimiento {#sec-categorizacion-nivel}
-Con el principal objetivo de poder analizar posteriormente de una manera más enriquecida los posibles grupos de carrera, se ha decidido crear una nueva variable que determinará el nivel del atleta. Para ello se definirán los siguientes umbrales: 
 
-- Élite: < 2:30:00
-- Semi-profesional: 2:30:00 - 3:30:00
-- Amateur: > 3:30:00
+Con el principal objetivo de poder analizar posteriormente de una manera más enriquecida los posibles grupos de carrera, se ha decidido crear una nueva variable que determinará el nivel del atleta. 
+
+Para definir los umbrales que diferenciarán dicho nivel se ha atendido primeramente a la marca mínima para participar en el Campeonato del Mundo. Establecida la élite, para la creación de las categorías de "Alto nivel", "Muy entrenado/a" y "Moderadamente entrenado/a" y "Principiante" se han observado las marcas con que las Majors organizan los cajones de salida.
+
+Los niveles han resultado así:
+Élite - < 02:17:00 (Men(M)) / < 02:43:00 (Women(W))
+Alto nivel - < 02:30:00 (Men(M)) / < 03:00:00 (Women(W))
+Muy entrenado/a - < 03:00:00 (Men(M)) / < 03:30:00 (Women(W))
+Moderadamente entrenado/a - < 03:30:00 (Men(M)) / < 04:00:00 (Women(W))
+Principiante - +03:30:00 (Men(M)) / + 04:00:00 (Women(W))
 
 ```{r}
-
-# Aqui habría que filtrar por Hombre o Mujer también...
-resultadosTokyo2025 <- resultadosTokyo2025 %>%
-  mutate(
-    Categoria = case_when(
-      tiempo_oficial <= 9000    ~ "Elite",
-      tiempo_oficial <= 12600   ~ "Semi-Profesional",
-      TRUE                         ~ "Amateur"
-    ),
-    
-    # Convertimos la nueva columna a factor con un orden lógico
-    Categoria = factor(Categoria, levels = c("Elite", "Semi-Profesional", "Amateur"))
-  )
-
+clasificar_atletas <- function(resultadosTokyo2025, genero_col = Genero, tiempo_col = tiempo_oficial) {
+  resultadosTokyo2025 %>%
+    mutate(
+      Genero_raw = tolower(trimws(as.character({{genero_col}}))),
+      Genero = case_when(
+        Genero_raw %in% c("women") ~ "F",
+        Genero_raw %in% c("men")   ~ "M",
+        TRUE ~ NA_character_
+      ),
+      tiempo_hms = as_hms({{tiempo_col}}),
+      categoria = case_when(
+        #hombres
+        Genero == "M" & tiempo_hms < as_hms("02:17:00") ~ "Élite",
+        Genero == "M" & tiempo_hms < as_hms("02:30:00") ~ "Alto nivel",
+        Genero == "M" & tiempo_hms < as_hms("03:00:00") ~ "Muy entrenado",
+        Genero == "M" & tiempo_hms < as_hms("03:30:00") ~ "Moderadamente entrenado",
+        Genero == "M" & tiempo_hms >= as_hms("03:30:00") ~ "Principiante",
+        #mujeres
+        Genero == "F" & tiempo_hms < as_hms("02:43:00") ~ "Élite",
+        Genero == "F" & tiempo_hms < as_hms("03:00:00") ~ "Alto nivel",
+        Genero == "F" & tiempo_hms < as_hms("03:30:00") ~ "Muy entrenada",
+        Genero == "F" & tiempo_hms < as_hms("04:00:00") ~ "Moderadamente entrenada",
+        Genero == "F" & tiempo_hms >= as_hms("04:00:00") ~ "Principiante",
+        
+        TRUE ~ "No élite"
+      ),
+      categoria = factor(categoria, levels = c("Élite", "Alto nivel", "Muy entrenado", "Muy entrenada", "Moderadamente entrenado", "Moderadamente entrenada", "Principiante", "No élite"))
+    ) %>%
+    select(-Genero_raw)
+}
 ```
 
+```{r}
+resultados_clasificados <- clasificar_atletas(resultadosTokyo2025)
+
+resultados_clasificados_masc <- resultados_clasificados %>% filter(Genero == "M")
+resultados_clasificados_fem  <- resultados_clasificados %>% filter(Genero == "F")
+
+head(resultados_clasificados_masc)
+head(resultados_clasificados_fem)
+```
 
 # Análisis Univariante
 
@@ -778,14 +806,11 @@ ggplot(resultadosTokyo2025, aes(y = Edad)) +
 
 El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 50 años, con algunos valores atípicos en ambos extremos. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
 
-
 ```{r}
 rm(edad_disp_forma, edad_stats, moda)
 ```
 
 ## Género
-
-### Análisis Univariante
 
 En esta sección se realiza un análisis descriptivo de la variable *Genero*. Para ello, vamos a comenzar inspeccionando las categorías de la variable y sus frecuencias, tanto absoluta (número de corredores) como relativa (porcentaje del total). 
 
@@ -851,8 +876,6 @@ rm(tabla_frecuencias_genero)
 
 ## Nacionalidad
 
-### Análisis Univariante
-
 A continuación, se realizará un análisis univariante de la *Nacionalidad* de los corredores, para ello, vamos a realizar un mapa interactivo con la librería *Plotly* en el que se podrá visualizar el número de participantes por país en una escala de colores: 
 
 ```{r}
@@ -897,9 +920,9 @@ fig
 
 ```
 
-En este mapa se pueden observar que el país que más participantes tuvo fue Japón, seguramente debido a que dicho maratón se realizó en este país. Otros países que llevaron más de 1000 corredores fueron Estados Unidos, Taiwán, China e Inglaterra.
+En este mapa se puede observar que el país que más participantes tuvo fue Japón, seguramente debido a que dicha maratón se realizó en este país. Otros países que llevaron más de 1000 corredores fueron Estados Unidos, Taiwán, China e Inglaterra.
 
-### Tiempo Oficial
+## Tiempo Oficial
 
 En el caso de las variables de timepos, se realizará el análisis con las columnas transformadas a segundos pero reflejando los resultados en formato horas, minutos y segundos para una mejor interpretación. Esta transformación implica que la varible es numérica continua. Como en las variables anteriores, se comenzará con los estadísticos de centralización.
 
@@ -982,81 +1005,52 @@ El rango de 4 horas, 56 minutos y 55 segundos indica una amplia variabilidad en 
 
 La asimetría positiva (0.15) indica que la distribución de los tiempos oficiales está ligeramente sesgada hacia la derecha, lo que significa que hay más corredores con tiempos superiores a la media. La curtosis (-0.87) indica que la distribución de los tiempos oficiales es más plana que una distribución normal, lo que sugiere que hay menos valores extremos en los tiempos oficiales de los corredores. 
 
-### Tiempos Parciales
-
-### Nivel de los atletas
-
-```{r}
-clasificar_atletas_masc <- function(resultadosTokyo2025, genero_col = Genero, tiempo_col = tiempo_oficial) {
-  resultadosTokyo2025 %>%
-    mutate(
-      Genero_raw = tolower(trimws(as.character({{genero_col}}))),
-      Genero = case_when(
-        Genero_raw %in% c("women") ~ "F",
-        Genero_raw %in% c("men")   ~ "M",
-        TRUE ~ NA_character_
-      ),
-      tiempo_hms = as_hms({{tiempo_col}}),
-      categoria = case_when(
-        Genero == "M" & tiempo_hms < as_hms("02:17:00") ~ "Élite",
-        Genero == "M" & tiempo_hms < as_hms("02:30:00") ~ "Alto nivel",
-        Genero == "M" & tiempo_hms < as_hms("03:00:00") ~ "Muy entrenado",
-        Genero == "M" & tiempo_hms < as_hms("03:30:00") ~ "Moderadamente entrenado",
-        Genero == "M" & tiempo_hms >= as_hms("03:30:00") ~ "Principiante",
-        TRUE ~ "No élite"
-      )
-    ) %>%
-    select(-Genero_raw)
-}
-```
-
-```{r}
-clasificar_atletas_fem <- function(resultadosTokyo2025, genero_col = Genero, tiempo_col = tiempo_oficial) {
-  resultadosTokyo2025 %>%
-    mutate(
-      Genero_raw = tolower(trimws(as.character({{genero_col}}))),
-      Genero = case_when(
-        Genero_raw %in% c("women") ~ "F",
-        Genero_raw %in% c("men")   ~ "M",
-        TRUE ~ NA_character_
-      ),
-      tiempo_hms = as_hms({{tiempo_col}}),
-      categoria = case_when(
-        #mujeres
-        Genero == "F" & tiempo_hms < as_hms("02:43:00") ~ "Élite",
-        Genero == "F" & tiempo_hms < as_hms("03:00:00") ~ "Alto nivel",
-        Genero == "F" & tiempo_hms < as_hms("03:30:00") ~ "Muy entrenada",
-        Genero == "F" & tiempo_hms < as_hms("04:00:00") ~ "Moderadamente entrenada",
-        Genero == "F" & tiempo_hms >= as_hms("04:00:00") ~ "Principiante",
-      )
-    ) %>%
-    select(-Genero_raw)
-}
-```
-
-```{r}
-resultados_clasificados_masc <- clasificar_atletas_masc(resultadosTokyo2025)
-head(resultados_clasificados)
-```
-
-```{r}
-resultados_clasificados_fem <- clasificar_atletas_fem(resultadosTokyo2025)
-head(resultados_clasificados)
-```
+## Tiempos Parciales
 
 ## Análisis Bivariante y Multivariante
 
 <!-- Relación entre variables, correlaciones, visualizaciones conjuntas, etc. -->
 
-Tabla de doble entrada para edad y tiempo oficial
+## Determinación de la estrategia a partir de los ritmos parciales
+
+## Edad y tiempo oficial
+
+En el gráfico que sigue se observa la relación entre los tiempos oficiales de los corredores y su edad.
 
 ```{r}
-tabla_doble_masc <- table(resultados_clasificados_masc$Edad, resultados_clasificados_masc$categoria)
+# Crear grupos de edad de 5 años desde 15 hasta 90
+resultadosTokyo2025 <- resultadosTokyo2025 %>%
+  mutate(
+    tiempo_min = as.numeric(as_hms(tiempo_oficial)) / 60,  # convertir tiempo a minutos
+    grupo_edad = cut(
+      Edad,
+      breaks = seq(15, 90, by = 5),
+      right = FALSE,
+      labels = paste(seq(15, 85, by = 5), seq(19, 89, by = 5), sep = "-")
+    )
+  )
+
+# Boxplot por grupo de edad
+ggplot(resultadosTokyo2025, aes(x = grupo_edad, y = tiempo_min)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(
+    x = "Grupo de edad",
+    y = "Tiempo (minutos)",
+    title = "Distribución del tiempo oficial por grupos de edad"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
 ```
 
-```{r}
-tabla_doble_fem <- table(resultados_clasificados_fem$Edad, resultados_clasificados_fem$categoria)
-```
+Se puede ver que la mediana de los tiempos, los valores superiores y los inferiores son más bajos para los grupos de edad "30-34", "35-39" y "40-44". También se observa que la variabilidad es similar en todos los grupos de edad salvo en el grupo "20-24" (es mayor) y "15-19", "70-74", "75-79" y "80-84", (es menor).
+
+## Edad y estrategia
+
+## Nivel y estrategia
 
 ## Identificación de Patrones y Formulación de Preguntas
 
@@ -1108,3 +1102,5 @@ tabla_doble_fem <- table(resultados_clasificados_fem$Edad, resultados_clasificad
 ## Conclusiones
 
 <!-- Resumen de hallazgos principales y posibles líneas de investigación. -->
+**De la relación de la edad y el tiempo oficial:** se traduce en que las edades donde hay mejores marcas son entre los 30 y los 44 años. En cuanto a la variabilidad, los grupos de edad que se sitúan en los extremos son aquellos en los que hay menor participación y corresponden con etapas vitales delicadas (crecimiento y vejez), lo que explicaría una menor variabilidad que en edades intermedias. *Explicar más*
+Que las mejores marcas no se consigan entre los 20 y los 30 sino a partir de los 30 tiene sentido por el tipo de ejercicio (aeróbico) y la tendencia del organismo a "hacerse resistente". *Mejorar*
