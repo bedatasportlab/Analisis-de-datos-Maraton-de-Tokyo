@@ -1310,7 +1310,8 @@ head(resultados_clasificados_fem)
 Tabla de doble entrada para edad y tiempo oficial
 
 ```{r}
-tabla_doble_masc <- table(resultados_clasificados_masc$Edad, resultados_clasificados_masc$categoria)
+tabla_doble_masc <- table(resultados_clasificados_masc$Edad,      resultados_clasificados_masc$categoria)
+
 ```
 
 ```{r}
@@ -1341,7 +1342,32 @@ ggplot(resultadosTokyo2025, aes(x = Genero, y = tiempo_oficial, fill = Genero)) 
   )
 ```
 
-Se observa como los hombres tienden a tener tiempos oficiales más bajos que las mujeres y los corredores no binarios. Hay que tener en cuenta que para los corredores no binarios hay muy pocos datos, por lo que la interpretación de su boxplot puede no ser representativa.
+Se observa como los hombres tienden a tener tiempos oficiales más bajos que las mujeres y los corredores no binarios. Hay que tener en cuenta que para los corredores no binarios hay muy pocos datos, por lo que la interpretación de su boxplot puede no ser representativa. 
+
+De igual forma se puede observar a través de un gráfico de densidad que muestra la distribución de los tiempos oficiales según el género de los corredores.
+
+```{r}
+# Densidad tiempo oficial por genero
+ggplot(resultadosTokyo2025, aes(x = tiempo_oficial, fill = Genero)) +
+  geom_density(alpha = 0.6, na.rm = TRUE, linewidth = 0.4) +
+  scale_x_continuous(
+    breaks = seq(0, 21600, by = 1800),
+    labels = function(x) as_hms(x),
+    expand = expansion(mult = c(0.03, 0.03))
+  ) +
+  labs(
+    title = "Densidad del Tiempo Oficial por Género",
+    x = "Tiempo Oficial (hh:mm:ss)",
+    y = "Densidad",
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "top"
+  )
+```
+
+Se puede observar como los hombres tienden a tener una distribución más concentrada en tiempos más bajos, mientras que las mujeres tienen una distribución más amplia y desplazada hacia tiempos más altos. Los corredores no binarios muestran una distribución diferente, pero debido a la baja cantidad de datos, es difícil sacar conclusiones definitivas.
 
 Ahora vamos a relacionar la edad con el genero de los corredores para ver si existe alguna diferencia en la edad de los participantes según su género.
 
@@ -1364,70 +1390,50 @@ ggplot(resultadosTokyo2025, aes(x = Genero, y = Edad, fill = Genero)) +
 
 Se observa que la mediana de edad es similar entre hombres y mujeres, aunque los hombres parecen tener una mayor variabilidad en sus edades. Los corredores no binarios tienen una mediana de edad más baja, pero nuevamente, el número de datos es muy limitado para hacer una interpretación sólida.
 
-```{r}
-  # ---- Función auxiliar para formatear segundos a "HH:MM" ----
-sec_to_hhmm <- function(x) {
-  # x en segundos; usamos POSIXct con origin para formatear a HH:MM
-  format(as.POSIXct(x, origin = "1970-01-01", tz = "UTC"), "%H:%M:%S")
-}
-
-
-p_smooth <- ggplot(resultadosTokyo2025, aes(x = Edad, y = tiempo_oficial, color = Genero)) +
-  geom_point(data = resultadosTokyo2025 %>% sample_n(3000), aes(alpha = 0.3), size = 0.8, show.legend = FALSE) + # muestra una muestra
-  geom_smooth(method = "loess", se = TRUE, linewidth = 1) +
-  scale_y_continuous(labels = sec_to_hhmm) +
-  labs(title = "Tendencia Edad vs Tiempo (LOESS) — muestra + linea suavizada") +
-  theme_minimal()
-p_smooth
-
-```
-
-
-
-En cuanto a la nacionalidad, vamos a ver los tiempos oficiales medios por país para los países con al menos 5 corredores.
+En cuanto a la nacionalidad, vamos a ver los tiempos oficiales medios por país para los países con al menos 5 corredores en el siguiente mapa.
 
 ```{r}
-
-# preparar df con número de corredores por país
-freq_paises <- resultadosTokyo2025 %>%
-  count(Pais_Estandarizado, name = "n_corredores")
-
-# preparar df con tiempos medios por país
-tiempos_pais <- resultadosTokyo2025 %>%
-  group_by(Pais_Estandarizado) %>%
+tiempos_medios_paises <- resultadosTokyo2025 %>%
+  group_by(Pais_Estandarizado, CODE) %>%
   summarise(
-    Tiempo_Medio = as_hms(mean(tiempo_oficial, na.rm = TRUE)),
+    corredores = n(),
+    tiempo_medio = as.numeric(mean(tiempo_oficial, na.rm = TRUE)), # segundos numéricos
     .groups = "drop"
-)
-
-plot_df <- tiempos_pais %>%
-  left_join(freq_paises, by = "Pais_Estandarizado") %>%
+  ) %>%
+  filter(corredores >= 5) %>%
   mutate(
-    n_corredores = ifelse(is.na(n_corredores), 0L, n_corredores),
-    Tiempo_Medio_num = as.numeric(Tiempo_Medio),
-    Tiempo_Medio_posix = as.POSIXct(Tiempo_Medio_num, origin = "1970-01-01", tz = "UTC"),
-    Tiempo_Medio_label = format(as_hms(Tiempo_Medio_num), "%H:%M")
+    tiempo_medio_label = format(as_hms(tiempo_medio), "%H:%M:%S"),
+    hover_text = paste0(
+      "<b>", Pais_Estandarizado, "</b><br>",
+      "Tiempo medio oficial: ", tiempo_medio_label, "<br>",
+      "Número de corredores: ", corredores
+    )
   )
 
-# Plotly interactivo: barra horizontal + hover con tiempo y nº corredores
+tickvals <- pretty(tiempos_medios_paises$tiempo_medio, n = 5)
+ticktext <- format(as_hms(tickvals), "%H:%M:%S")
+
+# MAPA
 plot_ly(
-  plot_df,
-  x = ~Tiempo_Medio_posix,
-  y = ~reorder(Pais_Estandarizado, Tiempo_Medio_posix),
-  type = "bar",
-  orientation = "h",
-  marker = list(color = ~Tiempo_Medio_num, colorscale = "Plasma", reversescale = TRUE),
-  text = ~paste0(Pais_Estandarizado, "<br>Tiempo medio: ", Tiempo_Medio_label, "<br>N: ", n_corredores),
-  hovertemplate = "%{text}<extra></extra>"
+  tiempos_medios_paises,
+  type = 'choropleth',
+  locations = ~CODE,         # debe ser ISO-3 u otro código que use tu dataset
+  z = ~tiempo_medio,        # valor numérico en segundos
+  text = ~hover_text,       # HTML preformateado
+  hovertemplate = "%{text}<extra></extra>",  # usamos el texto tal cual
+  colorscale = "Viridis",
+  reversescale = TRUE,
+  marker = list(line = list(color = 'white', width = 0.5))
 ) %>%
+  colorbar(title = "Tiempo medio (hh:mm:ss)", tickvals = tickvals, ticktext = ticktext) %>%
   layout(
-    title = "Tiempo Oficial Medio por País (interactivo)",
-    xaxis = list(tickformat = "%H:%M"),
-    margin = list(l = 220)
+    title = "Tiempo Oficial Medio por País (Maratón de Tokio)",
+    geo = list(showframe = FALSE, showcoastlines = FALSE, projection = list(type = 'mercator'))
   )
+
 ```
 
-Es importante tener en cuenta el número de corredores, ya que los países con pocos corredores pueden tener tiempos medios menos representativos.
+Se puede observar como en Japón, país anfitrión, el tiempo medio oficial es de aproximadamente 4 horas y 46 minutos pero cuenta con hasta casi 19000 corredores. Por otro lado, otros países con menos corredores como Kenia o Etiopía tienen tiempos medios oficiales significativamente mejores, alrededor de 2 horas y 12 minutos, lo que refleja un mayor nivel de los corredores de estos países. Por ello al analizar estos datos hay que tener en cuenta el número de corredores de cada país para interpretar correctamente los tiempos medios oficiales.
 
 # Identificación de Patrones y Formulación de Preguntas
 
@@ -1481,3 +1487,5 @@ Es importante tener en cuenta el número de corredores, ya que los países con p
 <!-- Resumen de hallazgos principales y posibles líneas de investigación. -->
 **De la relación de la edad y el tiempo oficial:** se traduce en que las edades donde hay mejores marcas son entre los 30 y los 44 años. En cuanto a la variabilidad, los grupos de edad que se sitúan en los extremos son aquellos en los que hay menor participación y corresponden con etapas vitales delicadas (crecimiento y vejez), lo que explicaría una menor variabilidad que en edades intermedias. *Explicar más*
 Que las mejores marcas no se consigan entre los 20 y los 30 sino a partir de los 30 tiene sentido por el tipo de ejercicio (aeróbico) y la tendencia del organismo a "hacerse resistente". *Mejorar*
+
+**De la relación del género y el tiempo oficial:** se observa que los hombres tienden a tener tiempos oficiales más bajos que las mujeres y los corredores no binarios. Hay que tener en cuenta que para los corredores no binarios hay muy pocos datos, por lo que la interpretación de sus gráficas puede no ser representativa. 
