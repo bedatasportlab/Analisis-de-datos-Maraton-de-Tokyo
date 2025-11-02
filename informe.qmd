@@ -724,7 +724,6 @@ moda <- function(x) {
 edad_stats <- resultadosTokyo2025 %>%
   summarise(
     Total_valores = sum(!is.na(Edad)),
-    Valores_faltantes = sum(is.na(Edad)),
     Media = round(mean(Edad, na.rm = TRUE), 2),
     Mediana = median(Edad, na.rm = TRUE),
     Moda = moda(Edad),
@@ -744,8 +743,8 @@ Representado de forma gráfica, en la siguiente figura se observa un histograma 
 
 ```{r}
 ggplot(resultadosTokyo2025, aes(x = Edad)) +
-  geom_histogram(aes(y = ..density..), binwidth=2, fill = "#90CAF9", color = "gray30") +
-  geom_density(aes(y = ..density..), 
+  geom_histogram(aes(y = after_stat(density)), binwidth=2, fill = "#90CAF9", color = "gray30") +
+  geom_density(aes(y = after_stat(density)), 
                fill = "#1976D2", alpha = 0.15) +
   labs(title = "Distribución de Edad",
        x = "Edad (años)", y = "Densidad") +
@@ -798,7 +797,7 @@ ggplot(resultadosTokyo2025, aes(y = Edad)) +
   theme_minimal(base_size = 12)
 ```
 
-El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 50 años, con algunos valores atípicos en ambos extremos. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
+El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 55 años. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución mas o menos simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
 
 ```{r}
 rm(edad_disp_forma, edad_stats)
@@ -929,7 +928,6 @@ En el caso de las variables de tiempo, se realizará el análisis con las column
 tiempo_stats <- resultadosTokyo2025 %>%
   summarise(
     Total_valores = sum(!is.na(tiempo_oficial)),
-    Valores_faltantes = sum(is.na(tiempo_oficial)),
     Media = round(mean(tiempo_oficial, na.rm = TRUE), 2),
     Mediana = median(tiempo_oficial, na.rm = TRUE),
     Moda = moda(tiempo_oficial),
@@ -1062,7 +1060,7 @@ etiquetas <- setNames(
   tiempos_parciales
 )
 
-p_density <- ggplot(df_plot, aes(x = segundos)) +
+ggplot(df_plot, aes(x = segundos)) +
   geom_density(fill = "#90CAF9", alpha = 0.6, na.rm = TRUE, linewidth = 0.4) +
   geom_vline(data = medianas, aes(xintercept = mediana),
              color = "#37474F", linetype = "dashed", linewidth = 0.6) +
@@ -1075,7 +1073,7 @@ p_density <- ggplot(df_plot, aes(x = segundos)) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
   labs(
     title = "Densidad de tiempos por parcial",
-    x = "Tiempo (hh:mm)",
+    x = "Tiempo (hh:mm:ss)",
     y = "Densidad"
   ) +
   theme_minimal(base_size = 11) +
@@ -1088,8 +1086,6 @@ p_density <- ggplot(df_plot, aes(x = segundos)) +
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), # rota etiquetas
     plot.title = element_text(face = "bold")
   )
-
-p_density
 ```
 
 Se puede observar que a medida que avanza la carrera, la distribución de los tiempos parciales tiende a desplazarse hacia la derecha, indicando que los corredores tardan más en completar cada segmento a medida que avanza la maratón. Además, las distribuciones parecen volverse más anchas en los parciales posteriores, lo que sugiere una mayor variabilidad en los tiempos a medida que los corredores avanzan en la carrera y se fatigan. 
