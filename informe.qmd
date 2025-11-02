@@ -734,7 +734,6 @@ moda <- function(x) {
 edad_stats <- resultadosTokyo2025 %>%
   summarise(
     Total_valores = sum(!is.na(Edad)),
-    Valores_faltantes = sum(is.na(Edad)),
     Media = round(mean(Edad, na.rm = TRUE), 2),
     Mediana = median(Edad, na.rm = TRUE),
     Moda = moda(Edad),
@@ -756,15 +755,15 @@ Representado de forma gráfica, en la siguiente figura se observa un histograma 
 
 ```{r}
 ggplot(resultadosTokyo2025, aes(x = Edad)) +
-  geom_histogram(aes(y = ..density..), binwidth=2, fill = "#90CAF9", color = "gray30") +
-  geom_density(aes(y = ..density..), 
+  geom_histogram(aes(y = after_stat(density)), binwidth=2, fill = "#90CAF9", color = "gray30") +
+  geom_density(aes(y = after_stat(density)), 
                fill = "#1976D2", alpha = 0.15) +
   labs(title = "Distribución de Edad",
        x = "Edad (años)", y = "Densidad") +
   theme_minimal(base_size = 12)
 ```
 
-En esta gráfica se observa que la distribución de edades de los corredores es aproximadamente normal, con una ligera asimetría positiva (hacia la derecha). La mayoría de los corredores tienen edades comprendidas entre los 25 y 40 años, con un pico alrededor de los 30 años. La media, mediana y moda están bastante cercanas entre sí, lo que indica que la distribución es simétrica.
+En esta gráfica se observa que la distribución de edades de los corredores es aproximadamente normal, con una ligera asimetría positiva (hacia la derecha). La mayoría de los corredores tienen edades comprendidas entre 35 y 55 años.
 
 A continuación se presentan los estadísticos de dispersión y forma de la distribución de edades.
 
@@ -792,7 +791,7 @@ datatable(
 
 <!-- Interpretación de los resultados de los estadísticos de dispersión -->
 
-Las edades varían desde un mínimo de 18 años hasta un máximo de 84 años, con un rango total de 65 años. La varianza (122,64) y la desviación estándar (11,07) indican que hay una dispersión moderada en las edades de los corredores. El coeficiente de variación del 23,77% sugiere que la variabilidad relativa de las edades es considerable.
+Las edades varían desde un mínimo de 19 años hasta un máximo de 84 años, con un rango total de 65 años. La varianza (122,64) y la desviación estándar (11,07) indican que hay una dispersión moderada en las edades de los corredores. El coeficiente de variación del 23,77% sugiere que la variabilidad relativa de las edades es considerable.
 
 La asimetría negativa (-0,06) indica que la distribución de edades es ligeramente sesgada hacia la izquierda, aunque está muy cerca de cero, lo que sugiere una distribución casi simétrica. La curtosis (-0,58) indica que la distribución de edades es ligeramente más plana que una distribución normal, lo que sugiere que hay menos valores extremos en las edades de los corredores.
 
@@ -806,7 +805,7 @@ ggplot(resultadosTokyo2025, aes(y = Edad)) +
   theme_minimal(base_size = 12)
 ```
 
-El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 50 años, con algunos valores atípicos en ambos extremos. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
+El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 55 años. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución mas o menos simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
 
 ```{r}
 rm(edad_disp_forma, edad_stats)
@@ -934,7 +933,6 @@ En el caso de las variables de timepos, se realizará el análisis con las colum
 tiempo_stats <- resultadosTokyo2025 %>%
   summarise(
     Total_valores = sum(!is.na(tiempo_oficial)),
-    Valores_faltantes = sum(is.na(tiempo_oficial)),
     Media = round(mean(tiempo_oficial, na.rm = TRUE), 2),
     Mediana = median(tiempo_oficial, na.rm = TRUE),
     Moda = moda(tiempo_oficial),
@@ -1065,7 +1063,7 @@ etiquetas <- setNames(
   tiempos_parciales
 )
 
-p_density <- ggplot(df_plot, aes(x = segundos)) +
+ggplot(df_plot, aes(x = segundos)) +
   geom_density(fill = "#90CAF9", alpha = 0.6, na.rm = TRUE, linewidth = 0.4) +
   geom_vline(data = medianas, aes(xintercept = mediana),
              color = "#37474F", linetype = "dashed", linewidth = 0.6) +
@@ -1078,7 +1076,7 @@ p_density <- ggplot(df_plot, aes(x = segundos)) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
   labs(
     title = "Densidad de tiempos por parcial",
-    x = "Tiempo (hh:mm)",
+    x = "Tiempo (hh:mm:ss)",
     y = "Densidad"
   ) +
   theme_minimal(base_size = 11) +
@@ -1091,8 +1089,6 @@ p_density <- ggplot(df_plot, aes(x = segundos)) +
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), # rota etiquetas
     plot.title = element_text(face = "bold")
   )
-
-p_density
 ```
 
 Se puede observar que a medida que avanza la carrera, la distribución de los tiempos parciales tiende a desplazarse hacia la derecha, indicando que los corredores tardan más en completar cada segmento a medida que avanza la maratón. Además, las distribuciones parecen volverse más anchas en los parciales posteriores, lo que sugiere una mayor variabilidad en los tiempos a medida que los corredores avanzan en la carrera y se fatigan.
@@ -1381,23 +1377,6 @@ ggplot(resultadosTokyo2025, aes(x = Genero, y = Edad, fill = Genero)) +
 ```
 
 Se observa que la mediana de edad es similar entre hombres y mujeres, aunque los hombres parecen tener una mayor variabilidad en sus edades. Los corredores no binarios tienen una mediana de edad más baja, pero nuevamente, el número de datos es muy limitado para hacer una interpretación sólida.
-
-```{r}
-  # ---- Función auxiliar para formatear segundos a "HH:MM" ----
-sec_to_hhmm <- function(x) {
-  # x en segundos; usamos POSIXct con origin para formatear a HH:MM
-  format(as.POSIXct(x, origin = "1970-01-01", tz = "UTC"), "%H:%M:%S")
-}
-
-p_smooth <- ggplot(resultadosTokyo2025, aes(x = Edad, y = tiempo_oficial, color = Genero)) +
-  geom_point(data = resultadosTokyo2025 %>% sample_n(3000), aes(alpha = 0.3), size = 0.8, show.legend = FALSE) + # muestra una muestra
-  geom_smooth(method = "loess", se = TRUE, linewidth = 1) +
-  scale_y_continuous(labels = sec_to_hhmm) +
-  labs(title = "Tendencia Edad vs Tiempo (LOESS) — muestra + linea suavizada") +
-  theme_minimal()
-p_smooth
-
-```
 
 ## Definición de estrategias
 
