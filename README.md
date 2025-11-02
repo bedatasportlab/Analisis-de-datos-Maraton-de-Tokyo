@@ -1,5 +1,5 @@
 # Analisis-de-datos-Maraton-Tokyo
-Este es un espacio dedicado al Análisis Exploratorio (EDA) de los datos de la "Major Marathon" de Tokyo 2025.
+Este es un espacio dedicado al Análisis Exploratorio (EDA) de los datos de la "Major Marathon" de Tokyo 2025. Una de las maratones internacionales más importantes del mundo, en la que participan tanto atletas de élite con el ambicioso objetivo de obtener una marca mínima para los campeonatos internacionales o los Juegos Olímpicos, como atletas amateur que se retan a dar su mejor versión en una de las ciudades más icónicas del planeta.
 
 ---
 
@@ -17,4 +17,6 @@ Puede ser de utilidad para entrenadores, managers deportivos, otros analistas de
 
 ---
 
-##📊Comienza el análisis
+## 🤔Sugerencias
+
+Para cualquier duda o sugerencia estamos disponibles en nuestra dirección de correo bedatasportlab@gmail.com.
