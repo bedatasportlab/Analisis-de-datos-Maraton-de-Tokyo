@@ -46,12 +46,12 @@ library(kableExtra)
 ```
 
 # Introducción
-El **maratón de Tokyo 2025** se celebró, en su 18ª edición, el domingo 2 de marzo de 2025. Esta edición forma parte de los World Marathon Majors y abrió la temporada 2025 de los grandes maratones internacionales. El recorrido atraviesa distintos puntos icónicos de la ciudad de Tokyo, estando su inicio frente al edificio del Gobierno Metropolitano y la línea de meta cerca de la estación Tokyo/Gyoko-dori Avenue. El maratón de Tokyo es un evento de gran participación, tanto de atletas de élite como de aficionados. 
+El **maratón de Tokyo 2025** se celebró, en su 18ª edición, el domingo 2 de marzo de 2025. Esta edición forma parte de los World Marathon Majors y abrió la temporada 2025 de los grandes maratones internacionales. El recorrido atraviesa distintos puntos icónicos de la ciudad de Tokyo, estando su inicio frente al edificio del Gobierno Metropolitano y la línea de meta cerca de la estación Tokyo/Gyoko-dori Avenue. La maratón de Tokyo es un evento de gran participación, tanto de atletas de élite como de aficionados. 
 
 En el presente documento se realizará un análisis exploratorio de datos (EDA) con el objetivo de extraer información relevante acerca de los resultados de los corredores que participaron en dicha prueba.
 
 # Presentación y Descripción del Dataset
-Los resultados del maratón de Tokyo han sido extraídos a través del siguiente [enlace](https://www.marathon.tokyo/2025/result). La extracción se ha realizado a través de técnicas de Web Scrapping con el objetivo de poder obtener datos relevantes referentes a los resultados de los corredores participantes.
+Los resultados de la maratón de Tokyo han sido extraídos a través del siguiente [enlace](https://www.marathon.tokyo/2025/result). La extracción se ha realizado a través de técnicas de Web Scrapping con el objetivo de obtener datos relevantes referentes a los resultados de los participantes.
 
 ## Importación del Dataset
 
@@ -108,11 +108,11 @@ El dataframe importado, *resultadosTokyo2025*, consta de las siguientes variable
 | parcial_40km   | Tiempo          | Tiempo de paso en el km 40                         | hh:mm:ss      |
 
 
-*Nota: El gross time es el tiempo que tarda un corredor en terminar la maratón desde que se da el pistoletazo de salida, no desde que cruza la línea de inicio de la prueba*
+*Nota: El gross time es el tiempo que tarda un corredor en terminar la maratón desde que se da el pistoletazo de salida, no desde que cruza la línea de inicio de la prueba.*
  
 ## Lectura de una fila{#sec-lecturafila}
 
-Una vez que conocemos el significado de cada variable por separado, se va a proceder a la lectura de la primera fila del *dataframe* con el objetivo de mejorar la comprensión sobre el formato de los datos:
+Una vez que conocemos el significado de cada variable por separado, se va a proceder a la lectura de la primera fila del *dataframe* con el fin de mejorar la comprensión sobre el formato de los datos:
 
 ```{r}
 # Lo visualizamos con la libreria DT porque es más interactiva a la hora de generar el documento qmd.
@@ -129,7 +129,7 @@ datatable(
 ```
 
 
-Se puede observar al corredor **Tadese Takele**, de nacionalidad **Etíope**, que corrió la maratón con el dorsal **número 5**. Tadese completó la maratón a sus 22 años con un tiempo de **2 horas, 3 minutos y 23 segundos**, pudiendose observar sus tiempos de paso cada 5 kilómetros y en el punto de la media maratón. 
+Se puede observar al corredor **Tadese Takele**, de nacionalidad **Etíope**, que corrió la maratón con el dorsal **número 5**. Tadese completó la maratón a sus 22 años con un tiempo de **2 horas, 3 minutos y 23 segundos**, pudiéndose observar sus tiempos de paso cada 5 kilómetros y en el punto de la media maratón. 
 
 ## Dimensiones del dataset
 
@@ -149,13 +149,13 @@ rm(filas, columnas)
 
 # Preparación y limpieza de los datos
 
-Como se ha podido observar en la sección @sec-lecturafila, el dataset presenta diversas particularidades que requieren atención antes de proceder con el análisis estadístico univariante. En primer lugar, algunas variables presentan formatos mixtos (japonés e inglés separados por "/"), lo cual dificulta la legibilidad y el procesamiento posterior. En segundo lugar, los tiempos están almacenados en formato HMS (horas:minutos:segundos), lo que complica operaciones aritméticas y comparaciones. 
+Como se ha podido observar en la sección @sec-lecturafila, el dataset presenta diversas particularidades que requieren atención antes de comenzar con el análisis estadístico univariante. En primer lugar, algunas variables presentan formatos mixtos (japonés e inglés separados por "/"), lo cual dificulta la legibilidad y el procesamiento posterior. En segundo lugar, los tiempos están almacenados en formato HMS (horas:minutos:segundos), lo que complica operaciones aritméticas y comparaciones. 
 
-Esta sección se procederá a la preparación del dataset mediante:
+En esta sección se procederá a la preparación del dataset mediante:
 
 1. **Detección y tratamiento de valores nulos e inconsistencias**: identificación de datos faltantes, duplicados y valores atípicos que comprometan la calidad del análisis.
 
-2. **Estandarización de formatos**: homogeneización de variables textuales (nombres, nacionalidades) para mejorar la legibilidad, facilitar una posible portabilidad del código (permitiendo cruzar datos con otros maratones) y habilitar nuevas formas de análisis posteriores.
+2. **Estandarización de formatos**: homogeneización de variables textuales (nombres, nacionalidades) para mejorar la legibilidad, facilitar una posible portabilidad del código (permitiendo cruzar datos con otras maratones) y habilitar nuevas formas de análisis posteriores.
 
 3. **Transformación y creación de variables derivadas**: conversión de tiempos a formato numérico (segundos), cálculo de ritmos parciales cada 5 km, y categorización de corredores según nivel de rendimiento (élite, semi-profesional, amateur).
 
@@ -163,7 +163,7 @@ Estas transformaciones permitirán un análisis univariante y multivariante más
 
 ## Detección de Problemas de Calidad {#sec-deteccion-problemas}
 
-En la actual sección se procederá a realizar un análisis de los posibles valores tomados por cada variable del conjunto de datos con el objetivo de detectar posibles irregularidades en los datos, ya sea a través de datos nulos (ya detectados u ocultos), duplicados, inconsistencias o valores atípicos. Para ello, vamos a comenzar con un vistazo a los datos agrupado por cada variable: 
+En la actual sección se procederá a realizar un análisis de los posibles valores tomados por cada variable del conjunto de datos con el objetivo de detectar posibles irregularidades en los datos, ya sea a través de datos nulos (ya detectados u ocultos), duplicados, inconsistencias o valores atípicos. Para ello, se va a comenzar con una primera vista de los datos agrupados por cada variable: 
 
 ```{r}
 # Resumen global de todas las variables.
@@ -180,24 +180,24 @@ cat("La variable Edad tiene los siguientes valores distintos: ", unique(resultad
 cat("La variable nacionalidad toma los siguientes valores: ", unique(resultadosTokyo2025$Nacionalidad))
 ```
 
-De este resumen podemos resaltar que: 
+De este resumen s puede resaltar que: 
 
 - Existen 35916 nombres únicos en el conjunto de datos, pero 36173 corredores, habrá que analizar **posibles duplicados**.
 - En los parciales, existen **datos faltantes NA**. 
 - En la variable *Nacionalidad*, existen valores de tipo **-** que determinan **datos faltantes ocultos**. 
 
-Tras este primer análisis global de las variables, vamos a proceder a identificar concretamente los problemas de calidad y tras ello, a tratarlos. 
+Tras este primer análisis global de las variables, se continúa con la identificación en concreto de los problemas de calidad y tras ello, con su tratamiento. 
 
 ### Duplicados e Inconsistencias {#sec-duplicados}
 
-Comenzamos realizando un análisis de posibles datos duplicados. Se ha podido observar en el análisis inicial que teníamos datos duplicados en las variables: 
+Se empieza realizando un análisis de posibles datos duplicados. Se ha podido observar en el análisis inicial que se tenían datos duplicados en las variables: 
 
 - *Nombre*
 - *Parciales*. 
 
-Cabe destacar que es normal que, al haber tantos corredores, existan datos duplicados en los parciales, ya que los corredores podían encontrarse en paralelo (o con diferencia menor a un minuto) al paso de cada sector y por ello tienen en esa variable el mismo dato. 
+Cabe destacar que es habitual que, al haber tantos corredores, existan datos duplicados en los parciales, ya que los corredores podían encontrarse en paralelo (o con diferencia menor a un minuto) al paso de cada sector y por ello tienen en esa variable el mismo dato. 
 
-Respecto a los duplicados en la variable *Nombre*, vamos a proceder a hacer un pequeño análisis con el objetivo de identificar el por qué de ello. Vamos a comenzar visualizando en una tabla aquellas filas identificadas con valores duplicados en la variable *Nombre*:
+Respecto a los duplicados en la variable *Nombre*, es conveniente hacer un pequeño análisis que permita conocer la causa de la repetición. Se comienza por visualizar en una tabla aquellas filas identificadas con valores duplicados en la variable *Nombre*:
 
 ```{r}
 
@@ -223,12 +223,12 @@ datatable(
 
 ```
 
-De esta tabla y resumen podemos observar lo siguiente: 
+De esta tabla y resumen se puede observar lo siguiente: 
 
 - Existen **valores nulos ocultos** identificados cómo (\**\* *** / ＊＊＊ ＊＊＊)
 - Existen nombres duplicados entre los corredores pero, tanto el BIB como los tiempos parciales son completamente distintos. Por lo tanto son datos **consistentes**. 
 
-Vamos a proceder a determinar como NA's reconocidos por el lenguaje estos valores nulos ocultos: 
+A continuación se va a determinar como NA's reconocidos por el lenguaje estos valores nulos ocultos: 
 
 ```{r}
 # Eliminamos los datos recién creados: 
@@ -238,7 +238,7 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>% mutate(Nombre = na_if(Nombre, "**
 
 ```
 
-Una vez identificados los datos nulos ocultos de la variable *Nombre*, vamos a continuar con la variable *Nacionalidad*, como bien hemos detectado en @sec-deteccion-problemas, esta variable toma valores "-" que corresponden a corredores a los que les falta el dato de la nacionalidad. Vamos a modificar este valor para tener identificados los datos nulos correspondientes a esta variable: 
+Una vez identificados los datos nulos ocultos de la variable *Nombre*, se va a proseguir con la variable *Nacionalidad*, como bien se ha detectado en @sec-deteccion-problemas, esta variable toma valores "-" que corresponden a corredores a los que les falta el dato de la nacionalidad. Es una buena práctica modificar este valor para tener identificados los datos nulos correspondientes a esta variable: 
 
 ```{r}
 resultadosTokyo2025<- resultadosTokyo2025 %>% mutate(Nacionalidad = na_if(Nacionalidad, "-"))
@@ -267,7 +267,7 @@ dim(inconsistentes_parciales)
 
 ```
 
-Observamos que el filtrado recibe 0 filas que cumplan que un parcial posterior tenga menor tiempo acumulado que uno anterior, por lo tanto no existen valores atípicos lógicos sobre estas variables. 
+El filtrado recibe 0 filas que cumplan que un parcial posterior tenga menor tiempo acumulado que uno anterior, por lo tanto no existen valores atípicos lógicos sobre estas variables. 
 
 ```{r}
 rm(inconsistentes_parciales)
@@ -276,13 +276,13 @@ rm(inconsistentes_parciales)
 ### Valores Nulos y Faltantes {#sec-valores-nulos}
 En esta subsección se realizará un análisis de los valores nulos y faltantes que existen en el conjunto de datos con el objetivo de identificar posibles patrones y establecer una estrategia para tratarlos. 
 
-Para ello, comenzamos realizando un análisis de completitud por variable: 
+Para ello, se comienza realizando un análisis de completitud por variable: 
 
 ```{r}
 naniar::miss_var_summary(resultadosTokyo2025)
 ```
 
-Se puede observar que tenemos un porcentaje total de datos nulos extremadamente bajo en cada variable. Se pueden observar que los datos nulos se agrupan en: 
+Se puede observar que se tiene un porcentaje total de datos nulos extremadamente bajo en cada variable. Se pueden observar que los datos nulos se agrupan en: 
 
 1. Datos nulos en la variable *Nombre*
 2. Datos nulos en la variable *Nacionalidad*
@@ -290,7 +290,7 @@ Se puede observar que tenemos un porcentaje total de datos nulos extremadamente 
 
 En los dos primeros casos, se ha decidido no realizar ninguna imputación ni tampoco eliminar las filas afectadas. Estos registros no se considerarán a la hora de realizar estudios univariantes o bivariantes que las involucren, manteniendo así información de especial relevancia en las demás variables. 
 
-Respecto al último caso, vamos a realizar un estudio para entender qué forma tienen los datos nulos asociados a los *Parciales*, para ello, comenzamos visualizando las filas con algún NA en estas filas: 
+Respecto al último caso, se va a realizar un estudio para entender qué forma tienen los datos nulos asociados a los *Parciales*, para ello, se empieza visualizando las filas con algún NA: 
 
 ```{r}
 # Definimos en un vector las columnas de parciales: 
@@ -320,7 +320,7 @@ Antes de seguir trabajando sobre el dataframe, es conveniente hacer una copia pa
 df_trabajo <- resultadosTokyo2025
 ```
 
-Tras ello, vamos a visualizar, de cada fila, cuántos valores nulos en total tiene: 
+Tras ello, se visualizará, de cada fila, cuántos valores nulos en total tiene: 
 ```{r}
 filas_con_na <- df_trabajo[rowSums(is.na(df_trabajo[, cols_tiempo])) > 0, ]
 filas_con_na$n_na <- rowSums(is.na(filas_con_na[, cols_tiempo]))
@@ -328,7 +328,7 @@ filas_con_na$n_na <- rowSums(is.na(filas_con_na[, cols_tiempo]))
 unique(filas_con_na$n_na)
 ```
 
-Por lo que se puede observar, el número de parciales faltantes puede ser 1, 2, 3, 5, 8 ó 9. Para finalizar el estudio de la forma de los valores nulos y faltantes de nuestro conjunto de datos, vamos a visualizar de todas estas filas, el número de parciales faltantes **consecutivos**, ya que será de vital importancia posterior. 
+Por lo que se puede observar, el número de parciales faltantes puede ser 1, 2, 3, 5, 8 ó 9. Para finalizar el estudio de la forma de los valores nulos y faltantes del conjunto de datos, se va a visualizar, de todas estas filas, el número de parciales faltantes **consecutivos**, ya que será de vital importancia para el posterior desarrollo del análisis. 
 
 ```{r}
 
@@ -342,7 +342,7 @@ filas_con_na$max_na_consec <- sapply(1:nrow(filas_con_na), function(i) {
 unique(filas_con_na$max_na_consec)
 ```
 
-Podemos observar viendo los valores que toma esta variable que, el número de parciales consecutivos faltantes puede ser 1,2,3,4 o 9.
+Viendo los valores que toma esta variable, el número de parciales consecutivos faltantes puede ser 1,2,3,4 o 9.
 
 ## Limpieza y Corrección de Datos {#sec-correccion}
 
@@ -350,7 +350,7 @@ En esta sección se realizará la correspondiente limpieza y correción de datos
 
 ### Tratamiento de Valores Nulos {#sec-tratamiento-nulos}
 
-Vamos a realizar el correspondiente tratamiento de los **valores nulos**, como bien hemos adelantado en la sección @sec-valores-nulos, los datos faltantes correspondientes a las variables de *Nombre* y *Nacionalidad* ni se imputarán ni se eliminarán dichas filas. 
+Se va a realizar el correspondiente tratamiento de los **valores nulos**, tal y como se ha adelantado en la sección @sec-valores-nulos, los datos faltantes correspondientes a las variables de *Nombre* y *Nacionalidad* ni se imputarán ni se eliminarán dichas filas. 
 
 Respecto a la estrategia para los parciales, cabe destacar que ninguno de las filas corresponde a abandonos o descalificaciones ya que sí que existe su tiempo final al paso por la meta. Se ha decidido tratar los datos nulos de la siguiente manera: 
 
@@ -384,7 +384,7 @@ Es decir, se produce un descarte de 9 filas del conjunto de datos, ya que tienen
 - Si el dato faltante es **media_maraton**, es preciso saber que desde el parcial del kilómetro 20 hay 1km y 96m de distancia y 3km 904m hasta el kilómetro 25.
 - Si el dato faltante es cualquier otro parcial, se imputará calculando el tiempo de paso con los parciales inmediatamente anterior y posterior a él.
 
-Vamos a comenzar por ello, descartando del conjunto de datos las filas que hemos clasificado como no imputables, lo haremos realizando un cruce por el BIB (único) y filtrando aquellas filas cuya clasificación sea "descartar": 
+Por ello, se va a comenzar descartando del conjunto de datos las filas que se han clasificado como no imputables. Se hará realizando un cruce por el BIB (único) y filtrando aquellas filas cuya clasificación sea "descartar": 
 
 ```{r}
 bibs_a_descartar <- filas_con_na %>%
@@ -397,7 +397,7 @@ resultadosTokyo2025<- resultadosTokyo2025 %>%
 rm(bibs_a_descartar, filas_con_na)
 ```
 
-Una vez descartados aquellos corredores no imputables, vamos a realizar la imputación de aquellos que sí que es posible realizarla. Para ello, vamos a comenzar imputando aquellos tiempos que no sean ni *parcial_5km* ni *parcial_40km*, para ello, creamos la siguiente función que gracias a una **interpolación lineal estándar**, nos ayudará a calcular el tiempo que necesitamos imputar con los tiempos y distancias previo y posterior: 
+Una vez descartados los corredores no imputables, se imputarán aquellos para los que sí que es posible estimar el tiempo faltante. Para ello, se va a comenzar imputando aquellos tiempos que no sean ni *parcial_5km* ni *parcial_40km*. Esto se conseguirá creando la siguiente función, que gracias a una **interpolación lineal estándar** facilitará el cálculo del tiempo que se necesita imputar, apoyándose en las distancias y tiempos previos y posteriores: 
 
 ```{r}
 imputar_parciales <- function(tiempos, dist, cols_tiempo) {
@@ -466,7 +466,7 @@ primera_imputacion$parcial_40km[filas_na_40] <- hms::as_hms(
 )
 ```
 
-Tras ello, redondeamos los tiempos del formato hms:
+Tras ello, se redondean los tiempos del formato hms:
 
 ```{r}
 redondear_hms <- function(x) {
@@ -480,7 +480,7 @@ primera_imputacion[cols_tiempo] <- lapply(
 )
 ```
 
-Por último, añadimos las imputaciones correspondientes al conjunto de datos inicial: 
+Por último, se añaden las imputaciones correspondientes al conjunto de datos inicial: 
 
 ```{r}
 filas_para_imputar[rownames(filas_para_imputar), cols_tiempo] <- primera_imputacion
@@ -499,7 +499,7 @@ print("Datos faltantes imputados")
 rm(df_trabajo, filas_para_imputar, primera_imputacion, d_5, d_10, d_35, d_40, dist, factor_salida, filas_na_5, filas_na_40, idx_5, idx_10, idx_35, idx_40, imputar_parciales, redondear_hms)
 ```
 
-Por último, observo el análisis de completitud para ver cómo se ha quedado el conjunto de datos: 
+Por último, se observa el análisis de completitud para ver cómo se ha quedado el conjunto de datos: 
 
 ```{r}
 skimr::skim(resultadosTokyo2025)
@@ -525,7 +525,7 @@ resultadosTokyo2025$Genero <- as.factor(resultadosTokyo2025$Genero)
 
 ### Nombre de los participantes {#sec-estandarizar-nombre}
 
-Al igual que el *Genero*, la variable *Nombre* presenta los nombres de cada participante con el mismo formato bilingüe, es por ello que también nos quedaremos con el idioma inglés, ya que esto nos abre la posibilidad de poder cruzar datos con otros maratones si en algún momento del análisis queremos hacer un análisis longitudinal de algún deportista. 
+Al igual que el *Genero*, la variable *Nombre* presenta los nombres de cada participante con el mismo formato bilingüe, es por ello que también se optará por el idioma inglés, ya que esto abre la posibilidad de poder cruzar datos con otros maratones si en algún momento del EDA se quiere hacer un análisis longitudinal de algún deportista. 
 
 ```{r}
 # Versión compacta para reemplazar la columna original
@@ -537,7 +537,7 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 
 ### Códigos de Nacionalidad {#sec-estandarizar-nacionalidad}
 
-Con el objetivo de poder definir de manera estándar y acorde a códigos para poder graficar más adelante países, se ha decidido estandarizar la variable *Nacionalidad*, ya que se puede observar cómo contiene carácteres especiales japonenes o incluso regiones cuyo nombre de país es distinto, es por ello que visualizamos primeramente los nombres:
+Con el objetivo de poder definir de manera estándar y acorde a códigos para poder graficar más adelante países, se ha decidido estandarizar la variable *Nacionalidad*, ya que se puede observar cómo contiene carácteres especiales japonenes o incluso regiones cuyo nombre de país es distinto, es por ello que se visualizan primeramente los nombres:
 
 ```{r}
 conteo_paises <- resultadosTokyo2025 %>%
@@ -557,7 +557,7 @@ datatable(
 
 Se peude observar que no existen países con el nombre duplicado (es decir, varios nombres para el mismo país). 
 
-Vamos a crear una nueva variable en nuestro conjunto de datos que se relacione con el país con el nombre ya estandarizado, *Pais_Estandarizado*. 
+Se va a crear una nueva variable en el conjunto de datos que se relacione con el país con el nombre ya estandarizado, *Pais_Estandarizado*. 
 
 ```{r}
 
@@ -594,7 +594,7 @@ conteo_paises_limpios <- resultadosTokyo2025 %>%
 
 ```
 
-Observamos que, en principio, los errores están completamente corregidos. Para ver si los nuevos nombres estandarizados están correctamente, vamos a cruzar los países recién creados con un conjunto de datos muy usado para realizar luego mapas geográficos con la librería [Plotly](https://plotly.com/r).
+Se observa que, en principio, los errores están completamente corregidos. Para ver si los nuevos nombres estandarizados están correctamente, se van a cruzar los países recién creados con un conjunto de datos muy usado para realizar luego mapas geográficos con la librería [Plotly](https://plotly.com/r).
 
 ```{r}
 df <- read.csv("https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv")
@@ -615,7 +615,7 @@ paises_problematicos$Pais_Estandarizado
 
 ```
 
-Se observan sólamente 2 países problemáticos (Palestine y Myanmar) por lo tanto, creamos una nueva variable llamada *CODE_PLOTLY* que contendrá el código de cada país según este dataframe subido: 
+Se observan sólamente 2 países problemáticos (Palestine y Myanmar) por lo tanto, se crea una nueva variable llamada *CODE_PLOTLY* que contendrá el código de cada país según este dataframe subido: 
 
 ```{r}
 
@@ -633,7 +633,7 @@ rm(conteo_paises, conteo_paises_limpios, df, paises_problematicos, paises_valido
 
 ### Conversión de Tiempos {#sec-convertir-tiempos}
 
-Con el objetivo de poder conseguir mejores análisis tanto univariantes como bivariantes en las variables referentes a tiempos (parciales o finales), se ha decidido convertirlas a segundos (numérico) para poder tratarlas adecuadamente de forma estadística. Cabe destacar que siempre que queramos visualizar las horas, minutos y segundos, podremos volver a convertirlas al formato adecuado. 
+Con el objetivo de poder conseguir mejores análisis tanto univariantes como bivariantes en las variables referentes a tiempos (parciales o finales), se ha decidido convertirlas a segundos (numérico) para poder tratarlas adecuadamente de forma estadística. Cabe destacar que siempre que se quieran visualizar las horas, minutos y segundos, se podrá volver a convertirlas al formato adecuado. 
 
 ```{r}
 resultadosTokyo2025 <- resultadosTokyo2025 %>%
@@ -711,7 +711,7 @@ Bajo este análisis se examinará cada variable del conjunto de datos para resum
 
 ## Edad
 
-Esta variable indica la **edad** de los corredores que participaron en la maratón. Se trata de una variable numérica discreta. Primero se examinán los principales estadísticos de centralización: media, moda y mediana
+Esta variable indica la **edad** de los corredores que participaron en la maratón. Se trata de una variable numérica discreta. Primero se examinarán los principales estadísticos de centralización: media, moda y mediana.
 
 ```{r}
 # Fun. moda que devuelve el valor más frecuente (si hay empates devuelve el primero)
@@ -799,7 +799,7 @@ ggplot(resultadosTokyo2025, aes(y = Edad)) +
   theme_minimal(base_size = 12)
 ```
 
-El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 55 años. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución mas o menos simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
+El boxplot muestra que la mayoría de las edades de los corredores están concentradas entre aproximadamente 39 y 55 años. La mediana (línea dentro de la caja) está cerca del centro de la caja, lo que indica una distribución más o menos simétrica de las edades. Los bigotes del boxplot indican que no hay valores extremadamente alejados del rango intercuartílico, lo que sugiere una distribución relativamente homogénea de las edades.
 
 ```{r}
 rm(edad_disp_forma, edad_stats)
@@ -807,7 +807,7 @@ rm(edad_disp_forma, edad_stats)
 
 ## Género
 
-En esta sección se realiza un análisis descriptivo de la variable *Genero*. Para ello, vamos a comenzar inspeccionando las categorías de la variable y sus frecuencias, tanto absoluta (número de corredores) como relativa (porcentaje del total). 
+En esta sección se realiza un análisis descriptivo de la variable *Genero*. Para ello, se va a comenzar inspeccionando las categorías de la variable y sus frecuencias, tanto absoluta (número de corredores) como relativa (porcentaje del total). 
 
 ```{r}
 tabla_frecuencias_genero <- resultadosTokyo2025 %>%
@@ -832,7 +832,7 @@ Se puede observar que existen 3 categorías con la siguiente participación:
 - **Women**
 - **Non-Binary**
 
-A continuación vamos a graficar la información obtenida en la tabla de frecuencia a través de un gráfico de barras. 
+A continuación se va a graficar la información obtenida en la tabla de frecuencia a través de un gráfico de barras. 
 
 ```{r}
 ggplot(tabla_frecuencias_genero, aes(x = reorder(Genero, -Frecuencia_Absoluta), y = Frecuencia_Absoluta, fill = Genero)) +
@@ -863,7 +863,7 @@ ggplot(tabla_frecuencias_genero, aes(x = reorder(Genero, -Frecuencia_Absoluta), 
   )
 ```
 
-Por lo tanto podemos observar que la composición de la maratón muestra que casi **tres de cada cuatro corredores eran hombres**. 
+Por lo tanto se ve que la composición de la maratón muestra que casi **tres de cada cuatro corredores eran hombres**. 
 
 ```{r}
 rm(tabla_frecuencias_genero)
@@ -871,7 +871,7 @@ rm(tabla_frecuencias_genero)
 
 ## Nacionalidad
 
-A continuación, se realizará un análisis univariante de la *Nacionalidad* de los corredores, para ello, vamos a realizar un mapa interactivo con la librería *Plotly* en el que se podrá visualizar el número de participantes por país en una escala de colores: 
+A continuación, se realizará un análisis univariante de la *Nacionalidad* de los corredores, para ello, se procede a elaborar un mapa interactivo con la librería *Plotly* en el que se podrá visualizar el número de participantes por país en una escala de colores: 
 
 ```{r}
 # 1. Contar corredores (asumimos que ya tienes esto)
@@ -1000,7 +1000,7 @@ El rango de 4 horas, 56 minutos y 55 segundos indica una amplia variabilidad en 
 
 La asimetría positiva (0.15) indica que la distribución de los tiempos oficiales está ligeramente sesgada hacia la derecha, lo que significa que hay más corredores con tiempos superiores a la media. La curtosis (-0.87) indica que la distribución de los tiempos oficiales es más plana que una distribución normal, lo que sugiere que hay menos valores extremos en los tiempos oficiales de los corredores. 
 
-Como **conclusión**, al deberse a un conjunto de datos de una maratón de libre participación en Tokyo, podemos observar una gran variabilidad de tiempos que se distribuye de manera creciente. Es decir, en general contra mayor es el tiempo final, más gente podemos encontrar en ese nivel de carrera. 
+Como **conclusión**, al deberse a un conjunto de datos de una maratón de libre participación en Tokyo, se puede observar una gran variabilidad de tiempos que se distribuye de manera creciente. Es decir, en general cuanto mayor es el tiempo final, más gente se encuentra en ese nivel de carrera. 
 
 ```{r}
 rm(tiempo_disp_forma, tiempo_stats)
@@ -1193,7 +1193,7 @@ ggplot(df_ritmos, aes(y = segundos, x = ritmo)) +
 
 Se puede observar que los ritmos parciales tienden a aumentar (es decir, los corredores corren más lentamente) a medida que avanza la maratón. Además existen mas valores atípicos en los ritmos de los parciales posteriores, lo que indica que algunos corredores tienen dificultades significativas para mantener su ritmo a medida que avanza la carrera. 
 
-Y en cuanto al ritmo oficial.
+Y en cuanto al ritmo oficial:
 ```{r}
 # Grafica de densidad ritmo oficial
 ggplot(resultadosTokyo2025, aes(x = ritmo_oficial)) +
@@ -1309,9 +1309,9 @@ Se puede observar como los hombres tienden a tener una distribución centrada en
 
 ## Tiempo oficial y edad
 
-A continuación vamos a analizar la relación existente entre la edad y los tiempos oficiales. Para ello, vamos a transformar la edad a categórica con el objetivo de visualizar la relación a través de grupos de edad.
+A continuación se va a analizar la relación existente entre la edad y los tiempos oficiales. Para ello, se va a transformar la edad a categórica con el objetivo de visualizar la relación a través de grupos de edad.
 
-Visualizamos la distribución de tiempos para cada grupo de edad a través de un box-plot: 
+Se visualiza la distribución de tiempos para cada grupo de edad a través de un box-plot: 
 
 ```{r}
 # Crear grupos de edad de 5 años desde 15 hasta 90
@@ -1336,13 +1336,13 @@ ggplot(resultadosTokyo2025, aes(x = grupo_edad, y = tiempo_min)) +
   )
 ```
 
-Si nos fijamos en las distribuciones de tiempos para cada grupo de edad, podemos observar que tiene una forma de "U" con el primer extremo más bajo que el segundo, es decir, para rangos de edad de entre 30 y 50, tanto en media como en general, se producen **mejores tiempos oficiales**. También se observa que la variabilidad es similar en todos los grupos de edad salvo en el grupo "20-24" (es mayor) y "15-19", "70-74", "75-79" y "80-84", (es menor).
+Poniendo el foco en las distribuciones de tiempos para cada grupo de edad, se observa que tiene una forma de "U" con el primer extremo más bajo que el segundo, es decir, para rangos de edad de entre 30 y 50, tanto en media como en general, se producen **mejores tiempos oficiales**. También se observa que la variabilidad es similar en todos los grupos de edad salvo en el grupo "20-24" (es mayor) y "15-19", "70-74", "75-79" y "80-84", (es menor).
 
 Se podría concluir que, con los datos referentes al maratón de Tokyo de 2025, el pico de rendimiento de los deportistas se alcanza entre los 30 y 50 años y que, a partir de aquí, se produce una bajada de rendimiento visible en los tiempos finales y su distribución.
 
 ## Tiempo oficial y nacionalidad
 
-En cuanto a la nacionalidad, vamos a ver los tiempos oficiales medios por país para los países con al menos 5 corredores en el siguiente mapa.
+En cuanto a la nacionalidad, se van a ver los tiempos oficiales medios por país para los países con al menos 5 corredores en el siguiente mapa.
 
 ```{r}
 tiempos_medios_paises <- resultadosTokyo2025 %>%
@@ -1393,7 +1393,7 @@ rm(tickvals, ticktext, etiquetas_ritmo, etiquetas, tiempos_medios_paises)
 
 ## Género y edad
 
-Ahora vamos a relacionar la edad con el genero de los corredores para ver si existe alguna diferencia en la edad de los participantes según su género.
+Ahora se va a relacionar la edad con el género de los corredores para ver si existe alguna diferencia en la edad de los participantes según su género.
 
 ```{r}
 # Obtener los niveles de la variable Género
@@ -1648,7 +1648,7 @@ La proporción más alta de atletas que optaron por una estrategia negativa (rec
 
 ## Cálculo del Tokyo Performance Index (TPI)
 
-En la actual sección vamos a calcular el **Tokyo Performance Index (TPI)**, un sistema de puntuación diseñado para evaluar el rendimiento individual de los corredores en la Maratón de Tokio 2025 mediante una medida relativa a los mejores registros conocidos.  
+En la actual sección se va a calcular el **Tokyo Performance Index (TPI)**, un sistema de puntuación diseñado para evaluar el rendimiento individual de los corredores en la Maratón de Tokio 2025 mediante una medida relativa a los mejores registros conocidos.  
 Este índice se construye a partir del **tiempo oficial final** de cada participante y de un **tiempo de referencia**, en este caso el **récord mundial** vigente.
 
 La fórmula utilizada tiene carácter **exponencial**, de forma que la puntuación máxima (1000 puntos) se asigna al corredor cuyo tiempo coincide con el de referencia, y el resto de participantes obtiene valores decrecientes en función de su desviación relativa.  
@@ -1694,7 +1694,7 @@ resultadosTokyo2025 <- resultadosTokyo2025 %>%
 
 ### Ránking de países por TPI
 
-A partir del TPI calculado para cada atleta, vamos a calcular la media de puntos obtenida por país, para evaluar el rendimiento de cada país. 
+A partir del TPI calculado para cada atleta, se va a calcular la media de puntos obtenida por país, para evaluar el rendimiento de cada país. 
 
 ```{r}
 ranking_paises <- resultadosTokyo2025 %>%
@@ -1741,7 +1741,7 @@ ggplot(head(ranking_paises, 5), aes(x = reorder(Pais_Estandarizado, Media_TPI), 
 
 ### Mejor país agrupado por TPI y por categoría del corredor
 
-Una vez realizado el ránking por países, ahora vamos a realizar el mismo proceso pero agrupando por nivel del corredor, para ver el nivel de cada país adaptado al tipo de participantes que llevó a la Maratón.
+Una vez realizado el ránking por países, ahora se realizará el mismo proceso pero agrupando por nivel del corredor, para ver el nivel de cada país adaptado al tipo de participantes que llevó a la Maratón.
 
 ```{r}
 ranking_categorias <- resultadosTokyo2025 %>%
@@ -1816,7 +1816,7 @@ Otro hecho llamativo es el desplazamiento hacia la derecha de la **distribución
 Con el **análisis univariante** se han podido extraer datos referentes a la **participación**: 
 
 En la "Major Marathon" de Tokyo de 2025 participaron **36.173 deportistas**, de los cuales 26.701 fueron hombres, 9.425 fueron mujeres y 38 deportistas se identificaron como de género no binario. Respectivamente representan el 73'83%, el 26'06% y el 0'11% del total de participantes.
-El menor de todos los corredores fue de 18 años y el mayor de 84, estando el común de edad comprendido entre los 39 y 50 años.
+El menor de todos los corredores fue de 19 años y el mayor de 84, estando el común de edad comprendido entre los 39 y 55 años.
 
 Al tener acceso a la nacionalidad de los deportistas, se ha podido ver que la mayoría de atletas provenían de Japón, país anfitrión de la maratón, seguido de Estados Unidos, Taiwán, China e Inglaterra. Los países que menos representación tuvieron se sitúan en Oriente Medio y África. Es de especial mención que no hubo ningún corredor de África Occidental y Central.
 
@@ -1846,7 +1846,7 @@ A partir de los ritmos se han podido determinar estrategias para relacionarlas c
 
 La táctica de carrera más utilizada ha sido la positiva, aquella en la que el ritmo es cada vez más lento. 
 Uno de las observaciones más llamativas es que más 1/4 de las corredoras y aproximadamente la mitad de los corredores de élite la utilizaban, existiendo literatura científica que defiende que **la mejor opción para una prueba de estas características es el mantenimiento del ritmo**.
-Cabe remarcar que la diferencia en la estrategia positiva entre atletas de élite o alto nivel y las demas categorías es que cuanto más bajo es el nivel, mayor es la diferencia de ritmo entre parciales.
+Cabe remarcar que la diferencia en la estrategia positiva entre atletas de élite o alto nivel y las demás categorías es que cuanto más bajo es el nivel, mayor es la diferencia de ritmo entre parciales.
 Otro detalle a destacar es que el porcentaje de mujeres de élite que consigue no variar el ritmo entre los parciales es considerablemente mayor que el porcentaje de hombres de élite.
 
 Esta última podría abrir las puertas a una **futura investigación** en la que se estudien comportamientos parecidos en otras maratones. Si coinciden con los resultados del presente análisis, se procuraría conocer las causas psicológicas y fisiológicas por las que el sexo femenino, a pesar de tener marcas inferiores que el masculino a nivel global, son capaces de ser más estables durante 42km y 195m.
