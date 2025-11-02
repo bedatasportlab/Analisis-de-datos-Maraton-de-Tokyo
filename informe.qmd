@@ -9,6 +9,8 @@ format:
   html:
     css: style.css
     title-block-banner: true
+    embed-resources: true
+    self-contained: true
 toc: true
 toc-depth: 2
 number-sections: true
