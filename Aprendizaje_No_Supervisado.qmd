@@ -4,7 +4,7 @@ author:
   - "Alba Martínez de la Hermosa"
   - "Alonso González Romero"
   - "Daniel López Paredes"
-date: "2025-10-16"
+date: "2025-11-16"
 format: 
   html:
     css: style.css
@@ -37,100 +37,60 @@ El **Análisis de Componentes Principales (PCA, por sus siglas en inglés *Princ
 
 ## PCA sobre ritmos de carrera a través de los parciales
 
-En esta sección se realiza un Análisis de Componentes Principales (PCA) para cada categoría de corredores. Se utilizan los tiempos reales de cada segmento de 5km (calculados como diferencia entre tiempos acumulados consecutivos), normalizados por el tiempo final, para capturar las estrategias de carrera y características de cada grupo.
+En esta sección se realiza un Análisis de Componentes Principales (PCA) para la categoría *Élite*. Se utilizan los tiempos reales de cada segmento de 5km junto con el segmento de 40km a meta, calculados a partir de los tiempos acumulados proporcionados en los parciales. A través de ellos, se dividirá cada parcial por el tiempo final del corredor con el objetivo de captar el porcentaje de tiempo que dedica a cada segmento durante la carrera. Por último y antes de iniciar el PCA, estandarizamos los datos para asegurar que los parciales de 5km y el de 2.195 km tengan la misma importancia en el análisis.
 
-### Configuración General del PCA
+### Preparación de datos
 
 ```{r}
-# ===== VARIABLES ACUMULADAS ORIGINALES =====
-vars_acumulados <- c("parcial_5km", "parcial_10km", "parcial_15km", 
-                     "parcial_20km", "parcial_25km", "parcial_30km", 
-                     "parcial_35km", "parcial_40km")
+# Filtrar por categoría Élite
+elite <- resultadosTokyo2025 %>%
+  filter(categoria == "Élite")
 
-# ===== FUNCIÓN PARA CALCULAR PARCIALES REALES =====
-calcular_parciales_reales <- function(df_datos) {
-  # Crear dataframe con tiempo 0 inicial
-  df_procesado <- df_datos %>%
-    mutate(
-      # Segmento 0-5km
-      seg_0_5 = parcial_5km,
-      # Segmento 5-10km
-      seg_5_10 = parcial_10km - parcial_5km,
-      # Segmento 10-15km
-      seg_10_15 = parcial_15km - parcial_10km,
-      # Segmento 15-20km
-      seg_15_20 = parcial_20km - parcial_15km,
-      # Segmento 20-25km
-      seg_20_25 = parcial_25km - parcial_20km,
-      # Segmento 25-30km
-      seg_25_30 = parcial_30km - parcial_25km,
-      # Segmento 30-35km
-      seg_30_35 = parcial_35km - parcial_30km,
-      # Segmento 35-40km
-      seg_35_40 = parcial_40km - parcial_35km,
-      # Segmento 40-42.195km (meta)
-      seg_40_meta = tiempo_oficial - parcial_40km
-    )
-  
-  return(df_procesado)
-}
+# Calcular parciales reales (tiempos de cada segmento)
+elite <- elite %>%
+  mutate(
+    seg_0_5 = parcial_5km,
+    seg_5_10 = parcial_10km - parcial_5km,
+    seg_10_15 = parcial_15km - parcial_10km,
+    seg_15_20 = parcial_20km - parcial_15km,
+    seg_20_25 = parcial_25km - parcial_20km,
+    seg_25_30 = parcial_30km - parcial_25km,
+    seg_30_35 = parcial_35km - parcial_30km,
+    seg_35_40 = parcial_40km - parcial_35km,
+    seg_40_meta = tiempo_oficial - parcial_40km
+  )
 
-# ===== CATEGORÍAS A ANALIZAR =====
-categorias <- c("Élite", "Alto nivel", "Muy entrenado/a", "Moderadamente entrenado/a", "Principiante")
+# Normalizar por tiempo oficial (porcentaje de tiempo en cada segmento)
+elite <- elite %>%
+  mutate(
+    rel_seg_0_5 = seg_0_5 / tiempo_oficial,
+    rel_seg_5_10 = seg_5_10 / tiempo_oficial,
+    rel_seg_10_15 = seg_10_15 / tiempo_oficial,
+    rel_seg_15_20 = seg_15_20 / tiempo_oficial,
+    rel_seg_20_25 = seg_20_25 / tiempo_oficial,
+    rel_seg_25_30 = seg_25_30 / tiempo_oficial,
+    rel_seg_30_35 = seg_30_35 / tiempo_oficial,
+    rel_seg_35_40 = seg_35_40 / tiempo_oficial,
+    rel_seg_40_meta = seg_40_meta / tiempo_oficial
+  )
 
-# ===== FUNCIÓN PARA REALIZAR PCA =====
-realizar_pca <- function(df_datos, categoria_nombre) {
-  # Filtrar por categoría
-  df_cat <- df_datos %>%
-    filter(categoria == categoria_nombre)
-  
-  # Calcular parciales reales
-  df_cat_procesado <- calcular_parciales_reales(df_cat)
-  
-  # Nombre segmentos (sin el último 40-meta por ahora)
-  segmentos <- c("seg_0_5", "seg_5_10", "seg_10_15", "seg_15_20", 
-                 "seg_20_25", "seg_25_30", "seg_30_35", "seg_35_40")
-  
-  # Normalizar segmentos por tiempo final (ratios)
-  df_pca_norm <- df_cat_procesado %>%
-    mutate(across(all_of(segmentos),
-                  ~ .x / tiempo_oficial,
-                  .names = "rel_{col}")) %>%
-    select(Edad, starts_with("rel_"), Nombre)
-  
-  # Eliminar posibles NA's
-  df_pca_norm <- df_pca_norm[complete.cases(df_pca_norm), ]
-  
-  # Realizar PCA (sin incluir Nombre en el análisis)
-  pca_res <- prcomp(df_pca_norm[, -ncol(df_pca_norm)], center = TRUE, scale. = TRUE)
-  
-  # Guardar nombres para posterior referencia
-  attr(pca_res, "nombres") <- df_pca_norm$Nombre
-  
-  return(pca_res)
-}
+# Seleccionar solo las variables para PCA
+elite_pca_data <- elite %>%
+  select(Nombre, Genero, estrategia, starts_with("rel_seg_")) %>%
+  na.omit()
 
-# ===== CREAR LISTA CON PCA PARA CADA CATEGORÍA =====
-pca_lista <- setNames(
-  lapply(categorias, function(cat) realizar_pca(resultadosTokyo2025, cat)),
-  categorias
-)
-
-cat("✓ PCAs calculados para todas las categorías\n")
-cat("✓ Parciales reales calculados como diferencias entre tiempos acumulados\n")
-cat("✓ Datos normalizados por tiempo oficial\n")
+cat("✓ Datos preparados para categoría Élite\n")
+cat("✓ Número de corredores:", nrow(elite_pca_data), "\n")
+cat("✓ Variables:", ncol(elite_pca_data) - 3, "segmentos normalizados\n")
 ```
-
----
-
-## Élite
 
 ### Análisis de Componentes Principales
 
 ```{r}
-pca_elite <- pca_lista[["Élite"]]
+# Realizar PCA (sin incluir las columnas Nombre, Genero, Estrategia)
+pca_elite <- prcomp(elite_pca_data[, -c(1:3)], center = TRUE, scale. = TRUE)
 
-# Resumen completo
+# Resumen
 cat("=== RESUMEN PCA - ÉLITE ===\n")
 print(summary(pca_elite))
 
@@ -139,243 +99,228 @@ autovalores_elite <- pca_elite$sdev^2
 cat("\n=== AUTOVALORES ===\n")
 print(autovalores_elite)
 
-# Autovectores (loadings)
-cat("\n=== AUTOVECTORES (Primeros 4 componentes) ===\n")
-print(pca_elite$rotation[, 1:4])
+# Varianza explicada
+var_explicada <- round(autovalores_elite / sum(autovalores_elite) * 100, 2)
+cat("\n=== VARIANZA EXPLICADA POR COMPONENTE (%) ===\n")
+print(var_explicada)
 
 # Varianza acumulada
-var_acum_elite <- cumsum(pca_elite$sdev^2) / sum(pca_elite$sdev^2)
-cat("\n=== VARIANZA ACUMULADA ===\n")
-print(var_acum_elite[1:4])
+var_acum_elite <- cumsum(var_explicada)
+cat("\n=== VARIANZA ACUMULADA (%) ===\n")
+print(var_acum_elite)
 ```
+
+Observamos que, con las 2 primeras componentes principales, se explica un 82.65% de la varianza total, lo que indica que estas dos componentes capturan la mayor parte de la información contenida en los datos originales.
+
+### Autovectores (Loadings)
+
+A continuación, visualizamos los autovectores (loadings) correspondientes a las dos primeras componentes principales:
+
+```{r}
+cat("=== AUTOVECTORES - PC1 y PC2 ===\n")
+print(pca_elite$rotation[, 1:2])
+```
+
+Observamos que **la primera componente principal (PC1)** contiene una especie de media ponderada en la cual, se dan valores negativos de manera creciente a medida que avanzan los segmentos de la carrera. A partir de los 25km, los siguientes segmentos comienzan a tomar valores positivos de manera incremental, bajando un poco el valor del segmento desde los 40km a meta. Esto sugiere ¿?
+
+Respecto a la **segunda componente principal (PC2)**, se observan valores ligeramente negativos en los 3 primeros segmentos de la carrera, seguido de valores altamente positivos en los parciales de 20 a 30km y valores negativos en los dos últimos segmentos. Esto sugiere ¿?
 
 ### Gráfica de PCA - Élite
 
 ```{r}
 # Preparar datos para graficar
 scores_elite <- as.data.frame(pca_elite$x[, 1:2])
-scores_elite$Nombre <- attr(pca_elite, "nombres")
+scores_elite$Nombre <- elite_pca_data$Nombre
+scores_elite$Genero <- elite_pca_data$Genero
+scores_elite$estrategia <- elite_pca_data$estrategia
 
-# Gráfica con nombres
-ggplot(scores_elite, aes(x = PC1, y = PC2, label = Nombre)) +
-  geom_point(size = 4, color = "#1976D2", alpha = 0.7) +
-  geom_text(vjust = -1, size = 2.5, fontface = "bold") +
+# Mostrar algunos valores
+cat("\n=== PRIMEROS 10 CORREDORES EN ESPACIO PC1-PC2 ===\n")
+print(head(scores_elite, 10))
+```
+
+#### Gráfico estático con ggplot2
+
+```{r}
+# Gráfica estática básica
+ggplot(scores_elite, aes(x = PC1, y = PC2, color = Genero, shape = estrategia)) +
+  geom_point(size = 4, alpha = 0.7) +
   labs(
-    title = "PCA - Categoría Élite",
-    x = paste0("PC1 (", round(pca_elite$sdev[1]^2 / sum(pca_elite$sdev^2) * 100, 2), "%)"),
-    y = paste0("PC2 (", round(pca_elite$sdev[2]^2 / sum(pca_elite$sdev^2) * 100, 2), "%)")
+    title = "PCA - Categoría Élite (por Género y Estrategia)",
+    x = paste0("PC1 (", var_explicada[1], "%)"),
+    y = paste0("PC2 (", var_explicada[2], "%)"),
+    color = "Género",
+    shape = "Estrategia"
   ) +
+  scale_color_manual(values = c("Men" = "#1976D2", "Women" = "#E91E63")) +
   theme_minimal(base_size = 12) +
   theme(
     plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
     panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank()
+    panel.grid.minor = element_blank(),
+    legend.position = "right"
   )
 ```
 
-### Interpretación
-
-En esta sección se pueden analizar los autovalores, autovectores y la varianza explicada. Los componentes principales representan las direcciones de máxima varianza en el espacio de estrategias de carrera de los atletas de élite.
-
----
-
-## Alto Nivel
-
-### Análisis de Componentes Principales
+#### Gráfico interactivo con plotly
 
 ```{r}
-pca_alto <- pca_lista[["Alto nivel"]]
+library(plotly)
 
-cat("=== RESUMEN PCA - ALTO NIVEL ===\n")
-print(summary(pca_alto))
+# Crear variable combinada para colores únicos por género y estrategia
+scores_elite <- scores_elite %>%
+  mutate(grupo = paste0(Genero, " - ", estrategia))
 
-cat("\n=== AUTOVALORES ===\n")
-print(pca_alto$sdev^2)
+# Definir paleta de colores combinada (género como tono base, estrategia como variación)
+colores_combinados <- c(
+  # Hombres (tonos azules)
+  "Men - Negativa" = "#1E3A8A",
+  "Men - Positiva" = "#2563EB",
+  "Men - Uniforme" = "#60A5FA",
+  "Men - Variable" = "#93C5FD",
+  # Mujeres (tonos rosas/morados)
+  "Women - Negativa" = "#831843",
+  "Women - Positiva" = "#BE185D",
+  "Women - Uniforme" = "#EC4899",
+  "Women - Variable" = "#F9A8D4"
+)
 
-cat("\n=== AUTOVECTORES (Primeros 4 componentes) ===\n")
-print(pca_alto$rotation[, 1:4])
+# Calcular rangos fijos de los ejes
+rango_x <- range(scores_elite$PC1, na.rm = TRUE)
+rango_y <- range(scores_elite$PC2, na.rm = TRUE)
+margen_x <- diff(rango_x) * 0.1
+margen_y <- diff(rango_y) * 0.1
 
-var_acum_alto <- cumsum(pca_alto$sdev^2) / sum(pca_alto$sdev^2)
-cat("\n=== VARIANZA ACUMULADA ===\n")
-print(var_acum_alto[1:4])
-```
+# Crear figura base
+fig <- plot_ly()
 
-### Gráfica de PCA - Alto Nivel
+# Agregar trazas por cada combinación de género y estrategia
+for (genero in unique(scores_elite$Genero)) {
+  for (estrat in unique(scores_elite$estrategia)) {
+    datos_grupo <- scores_elite %>%
+      filter(Genero == genero, estrategia == estrat)
+    
+    if (nrow(datos_grupo) > 0) {
+      fig <- fig %>%
+        add_trace(
+          data = datos_grupo,
+          x = ~PC1,
+          y = ~PC2,
+          type = "scatter",
+          mode = "markers",
+          name = paste0(genero, " - ", estrat),
+          legendgroup = genero,
+          legendgrouptitle = list(text = genero),
+          marker = list(
+            size = 12,
+            color = colores_combinados[paste0(genero, " - ", estrat)],
+            opacity = 0.85,
+            line = list(
+              color = "white",
+              width = 1.5
+            )
+          ),
+          text = ~paste0(
+            "<b style='font-size:14px'>", Nombre, "</b><br>",
+            "<br>",
+            "<b>Género:</b> ", Genero, "<br>",
+            "<b>Estrategia:</b> ", estrat, "<br>",
+            "<br>",
+            "<b>PC1:</b> ", round(PC1, 4), "<br>",
+            "<b>PC2:</b> ", round(PC2, 4)
+          ),
+          hovertemplate = "%{text}<extra></extra>"
+        )
+    }
+  }
+}
 
-```{r}
-scores_alto <- as.data.frame(pca_alto$x[, 1:2])
-scores_alto$Nombre <- attr(pca_alto, "nombres")
-
-ggplot(scores_alto, aes(x = PC1, y = PC2)) +
-  geom_point(size = 3, color = "#43A047", alpha = 0.7) +
-  labs(
-    title = "PCA - Categoría Alto Nivel",
-    x = paste0("PC1 (", round(pca_alto$sdev[1]^2 / sum(pca_alto$sdev^2) * 100, 2), "%)"),
-    y = paste0("PC2 (", round(pca_alto$sdev[2]^2 / sum(pca_alto$sdev^2) * 100, 2), "%)")
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank()
+# Configurar layout con ejes fijos
+fig <- fig %>%
+  layout(
+    title = list(
+      text = "<b>Análisis de Componentes Principales - Categoría Élite</b><br><sub>Estrategias de carrera en el Maratón de Tokio 2025</sub>",
+      font = list(
+        size = 18,
+        family = "Arial, sans-serif",
+        color = "#2C3E50"
+      ),
+      x = 0.5,
+      xanchor = "center"
+    ),
+    xaxis = list(
+      title = list(
+        text = paste0("<b>PC1 (", var_explicada[1], "%)</b>"),
+        font = list(size = 14, family = "Arial", color = "#34495E")
+      ),
+      range = c(rango_x[1] - margen_x, rango_x[2] + margen_x),
+      fixedrange = FALSE,
+      gridcolor = "#E8E8E8",
+      gridwidth = 1,
+      showgrid = TRUE,
+      zeroline = TRUE,
+      zerolinecolor = "#95A5A6",
+      zerolinewidth = 2,
+      tickfont = list(size = 11, color = "#34495E")
+    ),
+    yaxis = list(
+      title = list(
+        text = paste0("<b>PC2 (", var_explicada[2], "%)</b>"),
+        font = list(size = 14, family = "Arial", color = "#34495E")
+      ),
+      range = c(rango_y[1] - margen_y, rango_y[2] + margen_y),
+      fixedrange = FALSE,
+      gridcolor = "#E8E8E8",
+      gridwidth = 1,
+      showgrid = TRUE,
+      zeroline = TRUE,
+      zerolinecolor = "#95A5A6",
+      zerolinewidth = 2,
+      tickfont = list(size = 11, color = "#34495E")
+    ),
+    hovermode = "closest",
+    hoverlabel = list(
+      bgcolor = "white",
+      font = list(
+        family = "Arial, sans-serif",
+        size = 13,
+        color = "#2C3E50"
+      ),
+      bordercolor = "#BDC3C7",
+      align = "left"
+    ),
+    legend = list(
+      title = list(
+        text = "<b>Género y Estrategia</b>",
+        font = list(size = 13, family = "Arial")
+      ),
+      font = list(size = 11, family = "Arial"),
+      orientation = "v",
+      x = 1.02,
+      y = 1,
+      bgcolor = "rgba(255, 255, 255, 0.95)",
+      bordercolor = "#BDC3C7",
+      borderwidth = 1,
+      tracegroupgap = 10
+    ),
+    plot_bgcolor = "#FAFAFA",
+    paper_bgcolor = "#FFFFFF",
+    margin = list(l = 80, r = 180, t = 100, b = 80)
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    displaylogo = FALSE,
+    modeBarButtonsToRemove = c("lasso2d", "select2d"),
+    toImageButtonOptions = list(
+      format = "png",
+      filename = "pca_elite_tokyo2025",
+      height = 800,
+      width = 1200,
+      scale = 2
+    )
   )
+
+# Mostrar gráfico
+fig
 ```
-
-### Interpretación
-
-Analizar los componentes principales para esta categoría...
-
----
-
-## Muy Entrenado/a
-
-### Análisis de Componentes Principales
-
-```{r}
-pca_muy_ent <- pca_lista[["Muy entrenado/a"]]
-
-cat("=== RESUMEN PCA - MUY ENTRENADO/A ===\n")
-print(summary(pca_muy_ent))
-
-cat("\n=== AUTOVALORES ===\n")
-print(pca_muy_ent$sdev^2)
-
-cat("\n=== AUTOVECTORES (Primeros 4 componentes) ===\n")
-print(pca_muy_ent$rotation[, 1:4])
-
-var_acum_muy_ent <- cumsum(pca_muy_ent$sdev^2) / sum(pca_muy_ent$sdev^2)
-cat("\n=== VARIANZA ACUMULADA ===\n")
-print(var_acum_muy_ent[1:4])
-```
-
-### Gráfica de PCA - Muy Entrenado/a
-
-```{r}
-scores_muy_ent <- as.data.frame(pca_muy_ent$x[, 1:2])
-scores_muy_ent$Nombre <- attr(pca_muy_ent, "nombres")
-
-ggplot(scores_muy_ent, aes(x = PC1, y = PC2)) +
-  geom_point(size = 3, color = "#FB8C00", alpha = 0.7) +
-  labs(
-    title = "PCA - Categoría Muy Entrenado/a",
-    x = paste0("PC1 (", round(pca_muy_ent$sdev[1]^2 / sum(pca_muy_ent$sdev^2) * 100, 2), "%)"),
-    y = paste0("PC2 (", round(pca_muy_ent$sdev[2]^2 / sum(pca_muy_ent$sdev^2) * 100, 2), "%)")
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank()
-  )
-```
-
-### Interpretación
-
-Analizar los componentes principales para esta categoría...
-
----
-
-## Moderadamente Entrenado/a
-
-### Análisis de Componentes Principales
-
-```{r}
-pca_mod_ent <- pca_lista[["Moderadamente entrenado/a"]]
-
-cat("=== RESUMEN PCA - MODERADAMENTE ENTRENADO/A ===\n")
-print(summary(pca_mod_ent))
-
-cat("\n=== AUTOVALORES ===\n")
-print(pca_mod_ent$sdev^2)
-
-cat("\n=== AUTOVECTORES (Primeros 4 componentes) ===\n")
-print(pca_mod_ent$rotation[, 1:4])
-
-var_acum_mod_ent <- cumsum(pca_mod_ent$sdev^2) / sum(pca_mod_ent$sdev^2)
-cat("\n=== VARIANZA ACUMULADA ===\n")
-print(var_acum_mod_ent[1:4])
-```
-
-### Gráfica de PCA - Moderadamente Entrenado/a
-
-```{r}
-scores_mod_ent <- as.data.frame(pca_mod_ent$x[, 1:2])
-scores_mod_ent$Nombre <- attr(pca_mod_ent, "nombres")
-
-ggplot(scores_mod_ent, aes(x = PC1, y = PC2)) +
-  geom_point(size = 3, color = "#E53935", alpha = 0.7) +
-  labs(
-    title = "PCA - Categoría Moderadamente Entrenado/a",
-    x = paste0("PC1 (", round(pca_mod_ent$sdev[1]^2 / sum(pca_mod_ent$sdev^2) * 100, 2), "%)"),
-    y = paste0("PC2 (", round(pca_mod_ent$sdev[2]^2 / sum(pca_mod_ent$sdev^2) * 100, 2), "%)")
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank()
-  )
-```
-
-### Interpretación
-
-Analizar los componentes principales para esta categoría...
-
----
-
-## Principiante
-
-### Análisis de Componentes Principales
-
-```{r}
-pca_prin <- pca_lista[["Principiante"]]
-
-cat("=== RESUMEN PCA - PRINCIPIANTE ===\n")
-print(summary(pca_prin))
-
-cat("\n=== AUTOVALORES ===\n")
-print(pca_prin$sdev^2)
-
-cat("\n=== AUTOVECTORES (Primeros 4 componentes) ===\n")
-print(pca_prin$rotation[, 1:4])
-
-var_acum_prin <- cumsum(pca_prin$sdev^2) / sum(pca_prin$sdev^2)
-cat("\n=== VARIANZA ACUMULADA ===\n")
-print(var_acum_prin[1:4])
-```
-
-### Gráfica de PCA - Principiante
-
-```{r}
-# Para principiantes, muestrear aleatoriamente para no saturar el gráfico
-scores_prin_full <- as.data.frame(pca_prin$x[, 1:2])
-scores_prin_full$Nombre <- attr(pca_prin, "nombres")
-
-# Muestreo aleatorio: 500 corredores o todos si hay menos
-n_muestra <- min(500, nrow(scores_prin_full))
-set.seed(42)
-indices_muestra <- sample(1:nrow(scores_prin_full), n_muestra, replace = FALSE)
-scores_prin <- scores_prin_full[indices_muestra, ]
-
-ggplot(scores_prin, aes(x = PC1, y = PC2)) +
-  geom_point(size = 2.5, color = "#6A1B9A", alpha = 0.6) +
-  labs(
-    title = paste0("PCA - Categoría Principiante (muestra de ", n_muestra, " corredores)"),
-    x = paste0("PC1 (", round(pca_prin$sdev[1]^2 / sum(pca_prin$sdev^2) * 100, 2), "%)"),
-    y = paste0("PC2 (", round(pca_prin$sdev[2]^2 / sum(pca_prin$sdev^2) * 100, 2), "%)")
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank()
-  )
-```
-
-### Interpretación
-
-Analizar los componentes principales para esta categoría. Nótese que se ha utilizado una muestra aleatoria de corredores para facilitar la visualización debido al gran número de participantes en esta categoría.
-
-
-
 
