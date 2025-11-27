@@ -23,11 +23,15 @@ execute:
 
 # Importacion de librerías y datos
 ```{r}
-# Importo el df de resultadosTokyo tras el EDA realizado: 
-resultadosTokyo2025 <-readRDS("resultadosTokyo2025.rds")
+# Importo el df de resultadosTokyo tras el EDA realizado:
+resultadosTokyo2025 <- readRDS("resultadosTokyo2025.rds")
 
-# Importo las librerías necesarias: 
+# Importo las librerías necesarias:
 source("librerias.R")
+library(caret)
+library(rsample)
+
+
 ```
 
 
@@ -143,7 +147,10 @@ print(head(scores_elite, 10))
 
 ```{r}
 # Gráfica estática básica
-ggplot(scores_elite, aes(x = PC1, y = PC2, color = Genero, shape = estrategia)) +
+ggplot(
+  scores_elite,
+  aes(x = PC1, y = PC2, color = Genero, shape = estrategia)
+) +
   geom_point(size = 4, alpha = 0.7) +
   labs(
     title = "PCA - Categoría Élite (por Género y Estrategia)",
@@ -199,7 +206,7 @@ for (genero in unique(scores_elite$Genero)) {
   for (estrat in unique(scores_elite$estrategia)) {
     datos_grupo <- scores_elite %>%
       filter(Genero == genero, estrategia == estrat)
-    
+
     if (nrow(datos_grupo) > 0) {
       fig <- fig %>%
         add_trace(
@@ -220,14 +227,23 @@ for (genero in unique(scores_elite$Genero)) {
               width = 1.5
             )
           ),
-          text = ~paste0(
-            "<b style='font-size:14px'>", Nombre, "</b><br>",
+          text = ~ paste0(
+            "<b style='font-size:14px'>",
+            Nombre,
+            "</b><br>",
             "<br>",
-            "<b>Género:</b> ", Genero, "<br>",
-            "<b>Estrategia:</b> ", estrat, "<br>",
+            "<b>Género:</b> ",
+            Genero,
             "<br>",
-            "<b>PC1:</b> ", round(PC1, 4), "<br>",
-            "<b>PC2:</b> ", round(PC2, 4)
+            "<b>Estrategia:</b> ",
+            estrat,
+            "<br>",
+            "<br>",
+            "<b>PC1:</b> ",
+            round(PC1, 4),
+            "<br>",
+            "<b>PC2:</b> ",
+            round(PC2, 4)
           ),
           hovertemplate = "%{text}<extra></extra>"
         )
@@ -322,5 +338,122 @@ fig <- fig %>%
 
 # Mostrar gráfico
 fig
+```
+
+## Modelo de Regresión Logística para predecir si dará un bajón muy grande a partir del km 30
+
+```{r}
+
+# PREPARACIÓN DE LOS DATOS
+
+# Eliminar cartegoria No élite
+df <- resultadosTokyo2025 %>%
+  filter(categoria != "No élite") %>%
+  mutate(categoria = droplevels(as.factor(categoria)))
+
+
+unique(df$categoria)
+# Encoding variable (categoria: Élite, Alto nivel, Muy entrenado, Moderadamente entrenado, Principiante)
+
+df <- df %>%
+  mutate(
+    categoria_encoded = case_when(
+      categoria == "Élite" ~ 4,
+      categoria == "Alto nivel" ~ 3,
+      categoria == "Muy entrenado" ~ 2,
+      categoria == "Moderadamente entrenado" ~ 1,
+      categoria == "Principiante" ~ 0
+    )
+  )
+
+# Pasar a segundos los ritmos
+# Calcular parciales reales (tiempos de cada segmento)
+df <- df %>%
+  mutate(
+    seg_0_5 = parcial_5km,
+    seg_5_10 = parcial_10km - parcial_5km,
+    seg_10_15 = parcial_15km - parcial_10km,
+    seg_15_20 = parcial_20km - parcial_15km,
+    seg_20_25 = parcial_25km - parcial_20km,
+    seg_25_30 = parcial_30km - parcial_25km,
+    seg_30_35 = parcial_35km - parcial_30km,
+    seg_35_40 = parcial_40km - parcial_35km,
+    seg_40_meta = tiempo_oficial - parcial_40km
+  )
+
+# Normalizar por tiempo oficial (porcentaje de tiempo en cada segmento)
+df <- df %>%
+  mutate(
+    rel_seg_0_5 = seg_0_5 / tiempo_oficial,
+    rel_seg_5_10 = seg_5_10 / tiempo_oficial,
+    rel_seg_10_15 = seg_10_15 / tiempo_oficial,
+    rel_seg_15_20 = seg_15_20 / tiempo_oficial,
+    rel_seg_20_25 = seg_20_25 / tiempo_oficial,
+    rel_seg_25_30 = seg_25_30 / tiempo_oficial,
+    rel_seg_30_35 = seg_30_35 / tiempo_oficial,
+    rel_seg_35_40 = seg_35_40 / tiempo_oficial,
+    rel_seg_40_meta = seg_40_meta / tiempo_oficial
+  )
+
+
+# Crear variable objetivo: bajón muy grande a partir del km 30
+# Bonk = 1 si el corredor tiene un ritmo relativo mayor al 12% en alguno de los segmentos posteriores al km 30
+
+df <- df %>%
+  mutate(
+    bonk = ifelse(
+      (rel_seg_30_35 > 0.12) |
+        (rel_seg_35_40 > 0.14) |
+        (rel_seg_40_meta > 0.12),
+      1,
+      0
+    )
+  )
+
+# Visualizar categorias y bonk
+table(df$categoria, df$bonk)
+
+# Seleccionar variables para el modelo
+model_data <- df %>%
+  select(
+    bonk,
+    categoria_encoded,
+    rel_seg_0_5,
+    rel_seg_5_10,
+    rel_seg_10_15,
+    rel_seg_15_20,
+    rel_seg_20_25,
+    rel_seg_25_30
+  )
+
+```
+```{r}
+# Dividir en conjunto de entrenamiento y prueba
+set.seed(123)
+
+train_index <- createDataPartition(model_data$bonk, p = 0.8, list = FALSE)
+train_data <- model_data[train_index, ]
+test_data <- model_data[-train_index, ]
+
+# MODELO DE REGRESIÓN LOGÍSTICA
+logistic_model <- glm(
+  bonk ~ .,
+  data = train_data,
+  family = binomial(link = "logit")
+)
+
+# Resumen del modelo
+cat("=== RESUMEN MODELO DE REGRESIÓN LOGÍSTICA ===\n")
+summary(logistic_model)
+
+# Predicciones en el conjunto de prueba
+test_data$predicted_prob <- predict(logistic_model, newdata = test_data, type = "response")
+test_data$predicted_class <- ifelse(test_data$predicted_prob > 0.5, 1, 0)
+
+# Evaluación del modelo
+confusion_matrix <- table(test_data$bonk, test_data$predicted_class)
+cat("\n=== MATRIZ DE CONFUSIÓN ===\n")
+print(confusion_matrix)
+
 ```
 
