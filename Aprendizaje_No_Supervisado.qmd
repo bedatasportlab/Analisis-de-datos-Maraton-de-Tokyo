@@ -324,3 +324,49 @@ fig <- fig %>%
 fig
 ```
 
+# Modelo de regresión lineal para predecir el tiempo de la maratón 
+1) con los parciales hasta la media maratón
+2) con los tiempos desde la media maratón
+3) con los parciales hasta la media maratón teniendo en cuenta la edad
+4) con los parciales desde la media maratón teniendo en cuenta la edad
+5) teniéndolo todo en cuenta
+
+```{r}
+names(resultadosTokyo2025)
+
+modelo_parcial_hasta_mm <- lm(tiempo_oficial ~ parcial_5km + parcial_10km + parcial_15km + parcial_20km, medio_maraton,
+               data = resultadosTokyo2025)
+
+summary(modelo_parcial_hasta_mm)
+```
+
+```{r}
+par(mfrow = c(2, 2))   # 4 gráficos en una misma ventana
+plot(modelo_parcial_hasta_mm)
+par(mfrow = c(1, 1))
+```
+
+```{r}
+pred <- predict(modelo_parcial_hasta_mm)
+
+plot(resultadosTokyo2025$tiempo_oficial, pred,
+     xlab = "Tiempo real",
+     ylab = "Tiempo predicho",
+     main = "Predicción vs Real - modelo_parcial_hasta_mm")
+
+abline(0, 1, col="red", lwd=2)  # línea ideal
+```
+
+```{r}
+library(ggplot2)
+
+resultadosTokyo2025$pred <- predict(modelo_parcial_hasta_mm)
+
+ggplot(resultadosTokyo2025, aes(x = pred, y = tiempo_oficial)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  labs(title = "Predicciones vs valores reales - Modelo A",
+       x = "Tiempo predicho",
+       y = "Tiempo real") +
+  theme_minimal()
+```

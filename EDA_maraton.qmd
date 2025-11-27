@@ -698,10 +698,14 @@ resultadosTokyo2025<- resultadosTokyo2025 |>
         Genero == "Women" & tiempo_oficial < as.numeric(as_hms("03:30:00")) ~ "Muy entrenado",
         Genero == "Women" & tiempo_oficial < as.numeric(as_hms("04:00:00")) ~ "Moderadamente entrenado",
         Genero == "Women" & tiempo_oficial >= as.numeric(as_hms("04:00:00")) ~ "Principiante",
-        
-        TRUE ~ "No élite"
+        # No binario
+        Genero == "Non-binary" & tiempo_oficial < as.numeric(as_hms("02:30:00")) ~ "Élite",
+        Genero == "Non-binary" & tiempo_oficial < as.numeric(as_hms("02:45:00")) ~ "Alto nivel",
+        Genero == "Non-binary" & tiempo_oficial < as.numeric(as_hms("03:15:00")) ~ "Muy entrenado",
+        Genero == "Non-binary" & tiempo_oficial < as.numeric(as_hms("03:45:00")) ~ "Moderadamente entrenado",
+        Genero == "Non-binary" & tiempo_oficial >= as.numeric(as_hms("03:45:00")) ~ "Principiante",
       ),
-      categoria = factor(categoria, levels = c("Élite", "Alto nivel", "Muy entrenado", "Moderadamente entrenado","Principiante", "No élite"))
+      categoria = factor(categoria, levels = c("Élite", "Alto nivel", "Muy entrenado", "Moderadamente entrenado","Principiante"))
   )
 ```
 
