@@ -1456,8 +1456,8 @@ rm(p_smooth, sec_to_hhmm)
 
 Al conocer los tiempos de paso cada 5 kilómetros se han podido obtener los ritmos en min/km de cada parcial. Siguiendo la evolución de estos ritmos parciales se pueden definir varios tipos de estrategias:
 
-- **Positiva**: a medida que avanza la carrera el ritmo aumenta
-- **Negativa**: a medida que avanza la carrera el ritmo disminuye
+- **Positiva**: a medida que avanza la carrera el ritmo aumenta (más lento)
+- **Negativa**: a medida que avanza la carrera el ritmo disminuye (más rápido)
 - **Uniforme**: el ritmo es igual durante toda la carrera
 - **Parabólica**: los primeros y últimos kilómetros son más rápidos que los centrales
 

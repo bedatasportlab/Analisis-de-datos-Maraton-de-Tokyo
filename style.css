@@ -39,7 +39,7 @@ p, li {
 /* Logo derecho */
 .quarto-title-block::after {
   content: "";
-  background: url("LogoMUSA.png") no-repeat right center;
+  background: url("MUSA.png") no-repeat right center;
   background-size: 100px auto;
   position: absolute;
   top: 15px;
@@ -58,4 +58,15 @@ p, li {
 .quarto-title-block .author,
 .quarto-title-block .date {
   text-align: left !important;
+}
+
+/* --- Tabla de contenidos sin justificación --- */
+#TOC, .toc, nav#TOC, .sidebar nav[role="doc-toc"] {
+  text-align: left !important;
+  text-justify: none !important;
+}
+
+#TOC * , .toc * , nav#TOC * , .sidebar nav[role="doc-toc"] * {
+  text-align: left !important;
+  text-justify: none !important;
 }

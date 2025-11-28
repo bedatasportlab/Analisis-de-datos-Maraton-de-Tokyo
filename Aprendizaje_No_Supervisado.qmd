@@ -34,7 +34,6 @@ library(rsample)
 
 ```
 
-
 # Análisis de Componentes Principales
 
 El **Análisis de Componentes Principales (PCA, por sus siglas en inglés *Principal Component Analysis*)** es una técnica de reducción de dimensionalidad no supervisada que transforma un conjunto de variables correlacionadas en un conjunto más pequeño de variables no correlacionadas llamadas **componentes principales**. 
@@ -95,7 +94,7 @@ cat("✓ Variables:", ncol(elite_pca_data) - 3, "segmentos normalizados\n")
 pca_elite <- prcomp(elite_pca_data[, -c(1:3)], center = TRUE, scale. = TRUE)
 
 # Resumen
-cat("=== RESUMEN PCA - ÉLITE ===\n")
+cat("\n=== RESUMEN PCA - ÉLITE ===\n")
 print(summary(pca_elite))
 
 # Autovalores
@@ -125,9 +124,35 @@ cat("=== AUTOVECTORES - PC1 y PC2 ===\n")
 print(pca_elite$rotation[, 1:2])
 ```
 
-Observamos que **la primera componente principal (PC1)** contiene una especie de media ponderada en la cual, se dan valores negativos de manera creciente a medida que avanzan los segmentos de la carrera. A partir de los 25km, los siguientes segmentos comienzan a tomar valores positivos de manera incremental, bajando un poco el valor del segmento desde los 40km a meta. Esto sugiere ¿?
+Observamos que **la primera componente principal (PC1)** contiene una especie de media ponderada en la cual, se dan valores negativos de manera creciente a medida que avanzan los segmentos de la carrera. A partir de los 20km el valor absoluto de la PC1 se reduce de forma notable y vuelve a incrementar en los tramos de los 30km y los 35km.
+Un mayor valor absoluto en los parciales hasta los 20km y en los tramos 30-35km y 35-40km sugiere que para esta primera componente principal esos tramos son los más influyentes.
 
-Respecto a la **segunda componente principal (PC2)**, se observan valores ligeramente negativos en los 3 primeros segmentos de la carrera, seguido de valores altamente positivos en los parciales de 20 a 30km y valores negativos en los dos últimos segmentos. Esto sugiere ¿?
+En cuanto a los signos, son todos negativos hasta los 25km, momento a partir del cual los siguientes segmentos comienzan a tomar valores positivos de manera incremental, bajando un poco el valor del segmento desde los 40km a meta. 
+Esto significa que si se proyecta la PC1 sobre un atleta y este tiene un mayor porcentaje de tiempo normalizado en el primer tramo de la carrera, su PC1 tenderá a bajar. Si por el contrario, tiene un mayor porcentaje de tiempo normalizado en el último tramo, con valor positivo, su PC1 tenderá a subir. 
+
+A partir de aquí se deduce que los atletas que tengan un PC1 más bajo habrán pasado más porcentaje de tiempo relativo en los tramos iniciales que en los finales en comparación con el promedio (comienzo más lento y final más rápido). Los que tengan un PC1 más alto habrán pasado menos porcentaje de tiempo relativo en los tramos iniciales que en los finales en comparación con el promedio (comienzo más rápido y final más lento).
+
+Para facilitar la comprensión del análisis, esta primera componente puede recibir el nombre de **comienzo-fin de la carrera**.
+
+:::{.callout-important}
+No se está haciendo referencia a tiempos ni ritmos absolutos, sino a la distribución del porcentaje de tiempo de las carreras individuales. 
+Un atleta puede haber emepezado más rápido en términos absolutos pero tener un valor de PC1 más bajo porque, por su propia distribución del ritmo a lo largo de la carrera, ha pasado un porcentaje de tiempo mayor en el primer tramo. 
+De igual forma, un atleta puede haber pasado un porcentaje de tiempo menor en el primer tramo de la carrera (en comparación con el resto de porcentajes de su carrera), y por ello tener un valor de PC1 más alto, pero su ritmo en términos absolutos puede ser más lento que el de otros corredores.
+:::
+
+Respecto a la **segunda componente principal (PC2)**, se observan valores ligeramente negativos en los 3 primeros segmentos de la carrera, seguido de valores altamente positivos en los parciales de 20 a 30km y valores negativos en los dos últimos segmentos.
+
+Los valores altos en los segmentos intermedios indican que estos son los tramos que más influyen en la PC2. Los símbolos negativo y positivo reflejan que los tramos iniciales (0-5, 5-10 y 10-15) y finales (35-40 y 40-meta) tienden a bajar el valor de la PC2 mientras que los tramos intermedios (15-20, 20-25, 25-30, 30-35) tienden a subirlo.
+
+Al igual que se hizo con la PC1, si se proyectara la PC2 sobre un atleta y este hubiera pasado un porcentaje de tiempo relativo mayor en los tramos intermedios, tendría un valor de PC2 más alto que si hubiera pasado un porcentaje de tiempo relativo mayor en los tramos iniciales y finales.
+
+La deducción que se obtiene de esta proyección es que los atletas que tienen un valor de PC2 alto han empleado un porcentaje de tiempo relativo mayor en los tramos intermedios en comparación con el promedio (ritmo central más lento), mientras que los que tienen un valor de PC2 más bajo han empleado un porcentaje de tiempo relativo menor (ritmo central más rápido).
+
+Esta segunda componente puede recibir el nombre de **centro de carrera**.
+
+:::{.callout-important}
+Los tramos centrales que más importancia tienen en la PC2 (de los 20km a los 35km, con énfasis entre los 20km y 30km) corresponden con el "muro", momento en el que el rendimiento disminuye muy notablemente. De esta forma, la PC2 podría reflejar una bajada de rendimiento excesiva si se ven valores muy altos. Para comprobarlo se puede acudir a *elite_pca_data* y observar el porcentaje de tiempo normalizado en esos tramos comparados con el resto de porcentajes de la carrera.
+:::
 
 ### Gráfica de PCA - Élite
 
@@ -142,6 +167,21 @@ scores_elite$estrategia <- elite_pca_data$estrategia
 cat("\n=== PRIMEROS 10 CORREDORES EN ESPACIO PC1-PC2 ===\n")
 print(head(scores_elite, 10))
 ```
+
+En esta lista se puede observar cómo los atletas que tienen valores más bajos en la PC1 (a partir de -1.7) son los que siguen una estrategia uniforme mientras que los que tienen valores más altos (cercanos a 0) siguen una estrategia positiva.
+
+En cuanto a la PC2, todos los valores son bajos, muy cercanos a 0, indicando que: 
+
+1) Para los que han llevado una estrategia uniforme, la distribución relativa de los porcentajes de tiempo no ha sufrido grandes variaciones en ningún momento de la carrera con respecto al promedio promedio.
+
+2) Para los deportistas que han llevado una estrategia positiva, la caída en el rendimiento se ha dado más cerca de los kilómetros finales (a partir de los 35) que de los intermedios, es decir, los tramos intermedios de la carrera no han sido especialmente influyentes en comparación con el promedio. 
+Esto es coherente con sus valores de PC1 (0 comparado a los valores a partir de -1.7 de los otros atletas), pues los valores altos en PC1 reflejaban un comienzo más rápido y un final más ralentizado (menor porcentaje de tiempo relativo al principio en contraposición con el final).
+
+::: {.callout-important}
+No todas las estrategias presentarán los mismos valores de PC1 y PC2. Por ejemplo, un corredor puede llevar una estrategia positiva por haber disminuido su rendimiento en los tramos finales de la carrera o por haberlo disminuido en los tramos intermedios hasta la meta. 
+En el primero de los casos, la PC2, al referirse a los kilómetros centrales, no recogería la pérdida de velocidad relativa. En el segundo, dicha pérdida se vería reflejada tanto en la PC1 y como en la PC2. 
+La consistencia de la interpretación radica en la coherencia de cada estrategia con el significado de las componentes principales.
+:::
 
 #### Gráfico estático con ggplot2
 
@@ -340,241 +380,37 @@ fig <- fig %>%
 fig
 ```
 
-## Modelo de Regresión Logística para predecir si dará un bajón muy grande a partir del km 30
+En estas gráficas se representa lo que se exponía con anterioridad dibujando cada atleta en dos dimensiones. El atleta es cada uno de los puntos de la gráfica. El color distingue su género, y la forma del punto (en la primera gráfica) o la intensidad del color (en la segunda gráfica) indican la estrategia que ha llevado a cabo.
+Las dos dimensiones son las dos componentes principales.
 
-```{r}
+La mayoría de los puntos que están a la derecha del 0 en la PC1 son los deportistas que llevaron una estrategia positiva, independitentemente de los valores de la PC2. Los que corrieron de forma uniforme se sitúan a la izquierda del 0 en la PC1 y cerca del 0 en la PC2. Además, los que tienen valores más bajos en la PC1 son también los que más cerca se situán del valor 0 de la PC2.
 
-# PREPARACIÓN DE LOS DATOS
+Resulta llamativo que la mayoría de mujeres tuvieron menos variabilidad en el ritmo relativo que los hombres, hecho que también se observó durante el EDA al comparar las estrategias. Podría deberse a la mayor proporción de fibras tipo I (las más resistentes) del organismo femenino con respecto al masculino (**citar**).
 
-# Eliminar cartegoria No élite
-df <- resultadosTokyo2025 %>%
-  filter(categoria != "No élite") %>%
-  mutate(categoria = droplevels(as.factor(categoria)))
+### Respondiendo preguntas
 
+Con este PCA se puede responder a las preguntas formulada al final del EDA:
 
-unique(df$categoria)
-# Encoding variable (categoria: Élite, Alto nivel, Muy entrenado, Moderadamente entrenado, Principiante)
+*¿En qué momento o momentos hay un cambio notable en el ritmo de los atletas?* 
+Se ha visto que en función de los valores en PC1 y PC2 se puede estimar la zona de la carrera en la que el cambio en el rendimiento, si lo hubo, fue remarcable. 
+En los 10 atletas de élite que se han tomado de ejemplo antes de elaborar las gráficas, solo 2 aumentaron su porcentaje de tiempo relativo a partir de un determinado tramo. En estos casos fue a partir del kilómetro 35. Esta variación relativa refleja un cambio de ritmo significativo a falta de 7km y 195m para terminar la carrera.
 
-df <- df %>%
-  mutate(
-    categoria_encoded = case_when(
-      categoria == "Élite" ~ 4,
-      categoria == "Alto nivel" ~ 3,
-      categoria == "Muy entrenado" ~ 2,
-      categoria == "Moderadamente entrenado" ~ 1,
-      categoria == "Principiante" ~ 0
-    )
-  )
+*¿Hay algún cambio que sea común a los atletas?*
+**Falta** Habría que ver los valores de PC1 y PC2 de los que llevan estrategia positiva -> si PC1 alto y PC2 cercano a 0, caida en los ultimos km
+Si PC1 alto y PC2 alto -> caída en mitad de carrera.
+Responder a esta pregunta quizá después del clustering?
 
-# Pasar a segundos los ritmos
-# Calcular parciales reales (tiempos de cada segmento)
-df <- df %>%
-  mutate(
-    seg_0_5 = parcial_5km,
-    seg_5_10 = parcial_10km - parcial_5km,
-    seg_10_15 = parcial_15km - parcial_10km,
-    seg_15_20 = parcial_20km - parcial_15km,
-    seg_20_25 = parcial_25km - parcial_20km,
-    seg_25_30 = parcial_30km - parcial_25km,
-    seg_30_35 = parcial_35km - parcial_30km,
-    seg_35_40 = parcial_40km - parcial_35km,
-    seg_40_meta = tiempo_oficial - parcial_40km
-  )
+# Clustering
 
-# Normalizar por tiempo oficial (porcentaje de tiempo en cada segmento)
-df <- df %>%
-  mutate(
-    rel_seg_0_5 = seg_0_5 / tiempo_oficial,
-    rel_seg_5_10 = seg_5_10 / tiempo_oficial,
-    rel_seg_10_15 = seg_10_15 / tiempo_oficial,
-    rel_seg_15_20 = seg_15_20 / tiempo_oficial,
-    rel_seg_20_25 = seg_20_25 / tiempo_oficial,
-    rel_seg_25_30 = seg_25_30 / tiempo_oficial,
-    rel_seg_30_35 = seg_30_35 / tiempo_oficial,
-    rel_seg_35_40 = seg_35_40 / tiempo_oficial,
-    rel_seg_40_meta = seg_40_meta / tiempo_oficial
-  )
-
-
-# Crear variable objetivo: bajón muy grande a partir del km 30
-# Bonk = 1 si el corredor tiene un ritmo relativo mayor al 12% en alguno de los segmentos posteriores al km 30
-
-df <- df %>%
-  mutate(
-    bonk = ifelse(
-      (rel_seg_30_35 > 0.12) |
-        (rel_seg_35_40 > 0.14) |
-        (rel_seg_40_meta > 0.12),
-      1,
-      0
-    )
-  )
-
-# Visualizar categorias y bonk
-table(df$categoria, df$bonk)
-
-# Seleccionar variables para el modelo
-model_data <- df %>%
-  select(
-    bonk,
-    categoria_encoded,
-    rel_seg_0_5,
-    rel_seg_5_10,
-    rel_seg_10_15,
-    rel_seg_15_20,
-    rel_seg_20_25,
-    rel_seg_25_30
-  )
-
-```
-```{r}
-# Dividir en conjunto de entrenamiento y prueba
-set.seed(123)
-
-train_index <- createDataPartition(model_data$bonk, p = 0.8, list = FALSE)
-train_data <- model_data[train_index, ]
-test_data <- model_data[-train_index, ]
-
-# MODELO DE REGRESIÓN LOGÍSTICA
-logistic_model <- glm(
-  bonk ~ .,
-  data = train_data,
-  family = binomial(link = "logit")
-)
-
-# Resumen del modelo
-cat("=== RESUMEN MODELO DE REGRESIÓN LOGÍSTICA ===\n")
-summary(logistic_model)
-
-# Predicciones en el conjunto de prueba
-test_data$predicted_prob <- predict(logistic_model, newdata = test_data, type = "response")
-test_data$predicted_class <- ifelse(test_data$predicted_prob > 0.5, 1, 0)
-
-# Evaluación del modelo
-confusion_matrix <- table(test_data$bonk, test_data$predicted_class)
-cat("\n=== MATRIZ DE CONFUSIÓN ===\n")
-print(confusion_matrix)
-
-```
-
-## Modelo de Regresión Logística para predecir si dará un bajón muy grande a partir del km 30
-
-```{r}
-
-# PREPARACIÓN DE LOS DATOS
-
-# Eliminar cartegoria No élite
-df <- resultadosTokyo2025 %>%
-  filter(categoria != "No élite") %>%
-  mutate(categoria = droplevels(as.factor(categoria)))
-
-
-unique(df$categoria)
-# Encoding variable (categoria: Élite, Alto nivel, Muy entrenado, Moderadamente entrenado, Principiante)
-
-df <- df %>%
-  mutate(
-    categoria_encoded = case_when(
-      categoria == "Élite" ~ 4,
-      categoria == "Alto nivel" ~ 3,
-      categoria == "Muy entrenado" ~ 2,
-      categoria == "Moderadamente entrenado" ~ 1,
-      categoria == "Principiante" ~ 0
-    )
-  )
-
-# Pasar a segundos los ritmos
-# Calcular parciales reales (tiempos de cada segmento)
-df <- df %>%
-  mutate(
-    seg_0_5 = parcial_5km,
-    seg_5_10 = parcial_10km - parcial_5km,
-    seg_10_15 = parcial_15km - parcial_10km,
-    seg_15_20 = parcial_20km - parcial_15km,
-    seg_20_25 = parcial_25km - parcial_20km,
-    seg_25_30 = parcial_30km - parcial_25km,
-    seg_30_35 = parcial_35km - parcial_30km,
-    seg_35_40 = parcial_40km - parcial_35km,
-    seg_40_meta = tiempo_oficial - parcial_40km
-  )
-
-# Normalizar por tiempo oficial (porcentaje de tiempo en cada segmento)
-df <- df %>%
-  mutate(
-    rel_seg_0_5 = seg_0_5 / tiempo_oficial,
-    rel_seg_5_10 = seg_5_10 / tiempo_oficial,
-    rel_seg_10_15 = seg_10_15 / tiempo_oficial,
-    rel_seg_15_20 = seg_15_20 / tiempo_oficial,
-    rel_seg_20_25 = seg_20_25 / tiempo_oficial,
-    rel_seg_25_30 = seg_25_30 / tiempo_oficial,
-    rel_seg_30_35 = seg_30_35 / tiempo_oficial,
-    rel_seg_35_40 = seg_35_40 / tiempo_oficial,
-    rel_seg_40_meta = seg_40_meta / tiempo_oficial
-  )
-
-
-# Crear variable objetivo: bajón muy grande a partir del km 30
-# Bonk = 1 si el corredor tiene un ritmo relativo mayor al 12% en alguno de los segmentos posteriores al km 30
-
-df <- df %>%
-  mutate(
-    bonk = ifelse(
-      (rel_seg_30_35 > 0.12) |
-        (rel_seg_35_40 > 0.14) |
-        (rel_seg_40_meta > 0.12),
-      1,
-      0
-    )
-  )
-
-# Visualizar categorias y bonk
-table(df$categoria, df$bonk)
-
-# Seleccionar variables para el modelo
-model_data <- df %>%
-  select(
-    bonk,
-    categoria_encoded,
-    rel_seg_0_5,
-    rel_seg_5_10,
-    rel_seg_10_15,
-    rel_seg_15_20,
-    rel_seg_20_25,
-    rel_seg_25_30
-  )
-
-```
-```{r}
-# Dividir en conjunto de entrenamiento y prueba
-set.seed(123)
-
-train_index <- createDataPartition(model_data$bonk, p = 0.8, list = FALSE)
-train_data <- model_data[train_index, ]
-test_data <- model_data[-train_index, ]
-
-# MODELO DE REGRESIÓN LOGÍSTICA
-logistic_model <- glm(
-  bonk ~ .,
-  data = train_data,
-  family = binomial(link = "logit")
-)
-
-# Resumen del modelo
-cat("=== RESUMEN MODELO DE REGRESIÓN LOGÍSTICA ===\n")
-summary(logistic_model)
-
-# Predicciones en el conjunto de prueba
-test_data$predicted_prob <- predict(logistic_model, newdata = test_data, type = "response")
-test_data$predicted_class <- ifelse(test_data$predicted_prob > 0.5, 1, 0)
-
-# Evaluación del modelo
-confusion_matrix <- table(test_data$bonk, test_data$predicted_class)
-cat("\n=== MATRIZ DE CONFUSIÓN ===\n")
-print(confusion_matrix)
-
-```
+**¿Sería interesante?**
+Para diferenciar dentro de la élite los grupos que hay en función de las estrategias.
+Ver correlaciones entre el número de ganadores o TOP3 en cada grupo estratégico.
+Usar estas correlaciones y papers para respaldar con metodos estadísticos la evidencia de que estrategia uniforme es mejor para la maraton.
 
 # Modelo de regresión lineal para predecir el tiempo de la maratón 
+
+**En vez de usar todo esto, usar las dimensiones del PCA para predecir el tiempo de la maratón?** **O se pueden hacer las dos cosas?**
+
 1) con los parciales hasta la media maratón
 2) con los tiempos desde la media maratón
 3) con los parciales hasta la media maratón teniendo en cuenta la edad
@@ -619,4 +455,121 @@ ggplot(resultadosTokyo2025, aes(x = pred, y = tiempo_oficial)) +
        x = "Tiempo predicho",
        y = "Tiempo real") +
   theme_minimal()
+```
+
+# Modelo de Regresión Logística para predecir si dará un bajón muy grande a partir del km 30
+
+```{r}
+
+# PREPARACIÓN DE LOS DATOS
+
+# Eliminar cartegoria No élite
+df <- resultadosTokyo2025 %>%
+  filter(categoria != "No élite") %>%
+  mutate(categoria = droplevels(as.factor(categoria)))
+
+
+unique(df$categoria)
+# Encoding variable (categoria: Élite, Alto nivel, Muy entrenado, Moderadamente entrenado, Principiante)
+
+df <- df %>%
+  mutate(
+    categoria_encoded = case_when(
+      categoria == "Élite" ~ 4,
+      categoria == "Alto nivel" ~ 3,
+      categoria == "Muy entrenado" ~ 2,
+      categoria == "Moderadamente entrenado" ~ 1,
+      categoria == "Principiante" ~ 0
+    )
+  )
+
+# Pasar a segundos los ritmos
+# Calcular parciales reales (tiempos de cada segmento)
+df <- df %>%
+  mutate(
+    seg_0_5 = parcial_5km,
+    seg_5_10 = parcial_10km - parcial_5km,
+    seg_10_15 = parcial_15km - parcial_10km,
+    seg_15_20 = parcial_20km - parcial_15km,
+    seg_20_25 = parcial_25km - parcial_20km,
+    seg_25_30 = parcial_30km - parcial_25km,
+    seg_30_35 = parcial_35km - parcial_30km,
+    seg_35_40 = parcial_40km - parcial_35km,
+    seg_40_meta = tiempo_oficial - parcial_40km
+  )
+
+# Normalizar por tiempo oficial (porcentaje de tiempo en cada segmento)
+df <- df %>%
+  mutate(
+    rel_seg_0_5 = seg_0_5 / tiempo_oficial,
+    rel_seg_5_10 = seg_5_10 / tiempo_oficial,
+    rel_seg_10_15 = seg_10_15 / tiempo_oficial,
+    rel_seg_15_20 = seg_15_20 / tiempo_oficial,
+    rel_seg_20_25 = seg_20_25 / tiempo_oficial,
+    rel_seg_25_30 = seg_25_30 / tiempo_oficial,
+    rel_seg_30_35 = seg_30_35 / tiempo_oficial,
+    rel_seg_35_40 = seg_35_40 / tiempo_oficial,
+    rel_seg_40_meta = seg_40_meta / tiempo_oficial
+  )
+
+
+# Crear variable objetivo: bajón muy grande a partir del km 30
+# Bonk = 1 si el corredor tiene un ritmo relativo mayor al 12% en alguno de los segmentos posteriores al km 30
+
+df <- df %>%
+  mutate(
+    bonk = ifelse(
+      (rel_seg_30_35 > 0.12) |
+        (rel_seg_35_40 > 0.14) |
+        (rel_seg_40_meta > 0.12),
+      1,
+      0
+    )
+  )
+
+# Visualizar categorias y bonk
+table(df$categoria, df$bonk)
+
+# Seleccionar variables para el modelo
+model_data <- df %>%
+  select(
+    bonk,
+    categoria_encoded,
+    rel_seg_0_5,
+    rel_seg_5_10,
+    rel_seg_10_15,
+    rel_seg_15_20,
+    rel_seg_20_25,
+    rel_seg_25_30
+  )
+
+```
+```{r}
+# Dividir en conjunto de entrenamiento y prueba
+set.seed(123)
+
+train_index <- createDataPartition(model_data$bonk, p = 0.8, list = FALSE)
+train_data <- model_data[train_index, ]
+test_data <- model_data[-train_index, ]
+
+# MODELO DE REGRESIÓN LOGÍSTICA
+logistic_model <- glm(
+  bonk ~ .,
+  data = train_data,
+  family = binomial(link = "logit")
+)
+
+# Resumen del modelo
+cat("=== RESUMEN MODELO DE REGRESIÓN LOGÍSTICA ===\n")
+summary(logistic_model)
+
+# Predicciones en el conjunto de prueba
+test_data$predicted_prob <- predict(logistic_model, newdata = test_data, type = "response")
+test_data$predicted_class <- ifelse(test_data$predicted_prob > 0.5, 1, 0)
+
+# Evaluación del modelo
+confusion_matrix <- table(test_data$bonk, test_data$predicted_class)
+cat("\n=== MATRIZ DE CONFUSIÓN ===\n")
+print(confusion_matrix)
+
 ```
